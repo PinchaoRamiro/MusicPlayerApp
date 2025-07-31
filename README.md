@@ -35,6 +35,7 @@ Sincronizar dependencias de Gradle.
 Ejecutar en un emulador o dispositivo físico (Android 8+).
 
 📂 Estructura del proyecto
+~~bash
     app/
      ├── data/               # Modelos y acceso a datos
      │   └── model/          # Clase MusicTrack
@@ -49,6 +50,7 @@ Ejecutar en un emulador o dispositivo físico (Android 8+).
      │   └── components/     # Componentes reutilizables (NowPlayingFooter)
      ├── viewmodel/          # ViewModels (MusicListViewModel)
      └── MainActivity.kt
+~~
 
 🧩 Características técnicas
 Service (MediaPlaybackService) ejecuta la reproducción en segundo plano.
