@@ -10,7 +10,7 @@ import com.example.musicplayerapp.data.database.entities.PlaylistTrackCrossRef
 data class TrackWithPlaylists(
     @Embedded val track: MusicTrackEntity,
     @Relation(
-        parentColumn = "id",
+        parentColumn = "trackId",
         entityColumn = "playlistId",
         associateBy = Junction(PlaylistTrackCrossRef::class)
     )

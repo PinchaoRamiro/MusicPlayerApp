@@ -83,7 +83,7 @@ class MusicListViewModel @Inject constructor(
         viewModelScope.launch {
             favoriteUseCases.getFavorites()
                 .collect { list ->
-                    _favoriteTracks.value = list.map { it.id }
+                    _favoriteTracks.value = list.map { it.trackId.toLong() }
                 }
         }
     }

@@ -2,14 +2,14 @@ package com.example.musicplayerapp.data.local
 
 import android.content.Context
 import android.provider.MediaStore
-import com.example.musicplayerapp.data.model.MusicTrack
+import com.example.musicplayerapp.data.database.entities.MusicTrackEntity as TrackEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class MusicMediaStoreDataSource(private val context: Context) {
 
-    suspend fun getAllTracks(): List<MusicTrack> = withContext(Dispatchers.IO) {
-        val tracks = mutableListOf<MusicTrack>()
+    suspend fun getAllTracks(): List<TrackEntity> = withContext(Dispatchers.IO) {
+        val tracks = mutableListOf<TrackEntity>()
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
@@ -38,8 +38,8 @@ class MusicMediaStoreDataSource(private val context: Context) {
 
             while (cursor.moveToNext()) {
                 tracks.add(
-                    MusicTrack(
-                        id = cursor.getLong(idCol).toString(),
+                    TrackEntity(
+                        trackId = cursor.getLong(idCol).toString(),
                         title = cursor.getString(titleCol),
                         artist = cursor.getString(artistCol),
                         album = cursor.getString(albumCol),
@@ -50,6 +50,5 @@ class MusicMediaStoreDataSource(private val context: Context) {
             }
         }
         tracks
-
     }
 }

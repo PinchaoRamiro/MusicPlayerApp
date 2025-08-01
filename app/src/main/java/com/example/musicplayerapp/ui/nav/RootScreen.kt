@@ -114,7 +114,7 @@ fun getTitleForRoute(
                 ?.arguments?.getString("playlistId")
 
             val allPlaylists by playlistViewModel.uiState.collectAsState()
-            val playlist = allPlaylists.playlists.firstOrNull { it.id == playlistId }
+            val playlist = allPlaylists.playlists.firstOrNull { it.playlistId.toString() == playlistId }
 
             playlist?.name ?: "Detalles de Playlist"
         }

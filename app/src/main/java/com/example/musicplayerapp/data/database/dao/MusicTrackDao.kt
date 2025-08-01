@@ -16,9 +16,13 @@ interface MusicTrackDao {
     @Query("SELECT * FROM music_tracks")
     fun getAllTracks(): Flow<List<MusicTrackEntity>>
 
-    @Query("SELECT * FROM music_tracks WHERE id = :trackId")
+    @Query("SELECT * FROM music_tracks WHERE trackId = :trackId")
     suspend fun getTrackById(trackId: Long): MusicTrackEntity?
 
     @Query("DELETE FROM music_tracks")
     suspend fun deleteAllTracks()
+
+
+    @Query("DELETE FROM music_tracks")
+    suspend fun clearTracks()
 }

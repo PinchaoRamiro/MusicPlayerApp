@@ -20,6 +20,6 @@ interface PlaylistTrackDao {
     fun getPlaylistWithTracks(playlistId: Long): Flow<PlaylistWithTracks>
 
     @Transaction
-    @Query("SELECT * FROM music_tracks WHERE id = :trackId")
+    @Query("SELECT * FROM music_tracks WHERE trackId = :trackId")
     fun getTrackWithPlaylists(trackId: Long): Flow<TrackWithPlaylists>
 }

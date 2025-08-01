@@ -3,17 +3,26 @@ package com.example.musicplayerapp.data.repository
 import com.example.musicplayerapp.data.database.dao.FavoriteDao
 import com.example.musicplayerapp.data.database.dao.MusicTrackDao
 import com.example.musicplayerapp.data.database.entities.FavoriteEntity
-import com.example.musicplayerapp.data.database.entities.MusicTrackEntity
 import com.example.musicplayerapp.data.local.MusicMediaStoreDataSource
+import kotlinx.coroutines.flow.Flow
+import com.example.musicplayerapp.data.database.entities.MusicTrackEntity as TrackEntity
 
 class MusicRepository(
     private val musicTrackDao: MusicTrackDao,
     private val favoriteDao: FavoriteDao,
     private val musicMediaStoreDataSource: MusicMediaStoreDataSource
 ) {
-    suspend fun getAllTracks() = musicMediaStoreDataSource.getAllTracks()
+    fun getAllTracks(): Flow<List<TrackEntity>> = musicTrackDao.getAllTracks()
+    fun getAllTracksFlow(): Flow<List<TrackEntity>> = musicTrackDao.getAllTracks()
 
-    suspend fun insertTracks(tracks: List<MusicTrackEntity>) {
+
+    suspend fun refreshTracks() {
+        val tracks = musicMediaStoreDataSource.getAllTracks()
+        musicTrackDao.clearTracks()
+        musicTrackDao.insertTracks(tracks)
+    }
+
+    suspend fun insertTracks(tracks: List<TrackEntity>) {
         musicTrackDao.insertTracks(tracks)
     }
 

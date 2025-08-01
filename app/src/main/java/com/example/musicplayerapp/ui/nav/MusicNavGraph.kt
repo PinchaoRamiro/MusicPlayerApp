@@ -45,7 +45,7 @@ fun MusicNavGraph(
                 viewModel = playlistViewModel, // Pasamos el PlaylistViewModel
                 onPlaylistClick = { playlist ->
                     // Navegamos a la pantalla de detalles de la playlist
-                    navController.navigate("${MusicNavDestinations.PLAYLIST_DETAIL_ROUTE}/${playlist.id}")
+                    navController.navigate("${MusicNavDestinations.PLAYLIST_DETAIL_ROUTE}/${playlist.playlistId}")
                 }
             )
         }
@@ -58,7 +58,7 @@ fun MusicNavGraph(
             val playlistId = backStackEntry.arguments?.getString("playlistId")
             if (playlistId != null) {
                 PlaylistDetailScreen(
-                    playlistId = playlistId,
+                    playlistId = playlistId.toLong(),
                     musicListViewModel = musicListViewModel,
                     playlistViewModel = playlistViewModel // Pasamos el PlaylistViewModel
                 )

@@ -4,10 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-parcelize")
     alias(libs.plugins.hilt)
-    kotlin("kapt")
-    id("com.google.devtools.ksp")
+    kotlin("kapt") // solo para Hilt
+    id("com.google.devtools.ksp") // aplicar KSP aquí sin versión
 }
-
 android {
     namespace = "com.example.musicplayerapp"
     compileSdk = 35

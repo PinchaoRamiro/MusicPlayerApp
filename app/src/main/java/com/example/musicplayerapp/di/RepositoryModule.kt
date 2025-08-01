@@ -3,6 +3,7 @@ package com.example.musicplayerapp.di
 import com.example.musicplayerapp.data.repository.MusicRepository
 import com.example.musicplayerapp.data.repository.PlaylistRepository
 import com.example.musicplayerapp.data.database.dao.*
+import com.example.musicplayerapp.data.local.MusicMediaStoreDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,9 +18,13 @@ object RepositoryModule {
     @Singleton
     fun provideMusicRepository(
         musicTrackDao: MusicTrackDao,
-        favoriteDao: FavoriteDao
+        favoriteDao: FavoriteDao,
+        musicMediaStoreDataSource: MusicMediaStoreDataSource
     ): MusicRepository {
-        return MusicRepository(musicTrackDao, favoriteDao)
+        return MusicRepository(
+            musicTrackDao, favoriteDao,
+            musicMediaStoreDataSource
+        )
     }
 
     @Provides

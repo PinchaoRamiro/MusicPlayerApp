@@ -15,7 +15,7 @@ interface FavoriteDao {
 
     @Query("""
         SELECT music_tracks.* FROM music_tracks 
-        INNER JOIN favorites ON music_tracks.id = favorites.trackId
+        INNER JOIN favorites ON music_tracks.trackId = favorites.trackId
     """)
     fun getFavoriteTracks(): Flow<List<MusicTrackEntity>>
 

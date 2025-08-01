@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.MusicListItem
+import com.example.musicplayerapp.ui.theme.DarkColorScheme
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 
@@ -36,7 +37,6 @@ import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 @Composable
 fun PlaylistDetailScreen(
     playlistId: Long,
-    onBack: () -> Unit,
     musicListViewModel: MusicListViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
@@ -45,59 +45,40 @@ fun PlaylistDetailScreen(
     // Observamos dinámicamente los tracks de la playlist
     val tracksState by playlistViewModel.getPlaylistTracks(playlistId).collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Detalle Playlist",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+    MaterialTheme(colorScheme = DarkColorScheme) {
+        Scaffold(
+        ) { padding ->
+            when {
+                tracksState.isEmpty() -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Esta playlist está vacía",
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
-    ) { padding ->
-        when {
-            tracksState.isEmpty() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Esta playlist está vacía",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
                 }
-            }
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(tracksState) { track: MusicTrack ->
-                        MusicListItem(
-                            track = track,
-                            onClick = {
-                                musicListViewModel.playTrack(context = context, track = track)
-                            }
-                        )
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(tracksState) { track: MusicTrack ->
+                            MusicListItem(
+                                track = track,
+                                onClick = {
+                                    musicListViewModel.playTrack(context = context, track = track)
+                                }
+                            )
+                        }
                     }
                 }
             }

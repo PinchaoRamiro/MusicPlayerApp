@@ -17,7 +17,7 @@ interface PlaylistDao {
                p.name, 
                COUNT(pt.trackId) AS trackCount
         FROM playlists p
-        LEFT JOIN playlist_track_cross_ref pt 
+        LEFT JOIN playlist_tracks pt 
                ON p.playlistId = pt.playlistId
         GROUP BY p.playlistId
         ORDER BY p.createdAt DESC
