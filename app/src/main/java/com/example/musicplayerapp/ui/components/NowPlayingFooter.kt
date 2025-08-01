@@ -104,7 +104,7 @@ fun NowPlayingFooter(
                     Icon(
                         painter = if (isPlaying) painterResource(id = android.R.drawable.ic_media_pause) else painterResource(id = android.R.drawable.ic_media_play),
                         contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
+                        tint = if (isPlaying) MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary,
                     )
                 }
                 IconButton(onClick = onNextClick) {

@@ -7,7 +7,7 @@ class ScanMusicUseCase(
     private val repository: MusicRepository
 ) {
     suspend operator fun invoke(): List<MusicTrack> {
-        return repository.fetchAllTracks()
+        return repository.getAllTracks()
     }
 }
 

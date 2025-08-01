@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.R
@@ -27,7 +26,7 @@ import com.example.musicplayerapp.viewmodel.MusicListViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicListScreen(
-    viewModel: MusicListViewModel
+    viewModel: MusicListViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
@@ -36,16 +35,6 @@ fun MusicListScreen(
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("My music") },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-
-                )
-            },
             bottomBar = {
                 NowPlayingFooter(
                     currentTrack = currentTrack,
