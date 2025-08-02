@@ -19,11 +19,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.R
+import androidx.media3.session.R as IconR
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.utils.formatDuration
 
 @Composable
-fun MusicListItem(track: MusicTrack, onClick: () -> Unit) {
+fun MusicListItem(
+    track: MusicTrack,
+    onClick: () -> Unit,
+    showCheckbox: Boolean = false,
+    checked: Boolean = false,
+    onCheckedChange: ((Boolean) -> Unit)? = null,
+    showMenu: Boolean = false,
+    onMenuClick: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -61,5 +70,25 @@ fun MusicListItem(track: MusicTrack, onClick: () -> Unit) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
+
+        // Checkbox opcional
+        if (showCheckbox && onCheckedChange != null) {
+            androidx.compose.material3.Checkbox(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+
+        // Botón de menú opcional
+        if (showMenu && onMenuClick != null) {
+            Icon(
+                painter = painterResource(id = IconR.drawable.media3_icon_playlist_add),
+                contentDescription = "Menu",
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .clickable { onMenuClick() }
+            )
+        }
     }
 }

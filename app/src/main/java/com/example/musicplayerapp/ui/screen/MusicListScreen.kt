@@ -1,7 +1,6 @@
 package com.example.musicplayerapp.ui.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,13 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.musicplayerapp.R
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.components.MusicListItem
@@ -27,7 +22,7 @@ import com.example.musicplayerapp.viewmodel.MusicListViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicListScreen(
-    viewModel: MusicListViewModel
+    viewModel: MusicListViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
@@ -36,16 +31,6 @@ fun MusicListScreen(
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("My music") },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-
-                )
-            },
             bottomBar = {
                 NowPlayingFooter(
                     currentTrack = currentTrack,
@@ -105,7 +90,12 @@ fun MusicListContent(tracks: List<MusicTrack>, onTrackClick: (MusicTrack) -> Uni
             }
         }
         items(tracks) { track ->
-            MusicListItem(track = track, onClick = { onTrackClick(track) })
+            MusicListItem(
+                track = track,
+                onClick = { onTrackClick(track) },
+                showMenu = true,
+                onMenuClick = null
+            )
         }
     }
 }

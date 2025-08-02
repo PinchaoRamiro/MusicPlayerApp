@@ -63,7 +63,6 @@ class MusicPlayerController(context: Context) {
 
         if (originalPlaylist.isNotEmpty()) {
             val currentTrack = getCurrentTrack()
-            val currentIndex = exoPlayer.currentMediaItemIndex
 
             val newPlaylist = if (newShuffleState) {
                 originalPlaylist.shuffled()

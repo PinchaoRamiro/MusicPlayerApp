@@ -3,8 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-parcelize")
+    alias(libs.plugins.hilt)
+    kotlin("kapt") // solo para Hilt
+    id("com.google.devtools.ksp") // aplicar KSP aquí sin versión
 }
-
 android {
     namespace = "com.example.musicplayerapp"
     compileSdk = 35
@@ -42,8 +44,7 @@ android {
     }
 
     composeOptions {
-        // Kotlin Compiler Extension para Compose (usamos BOM)
-        kotlinCompilerExtensionVersion = libs.versions.composeBom.get()
+        kotlinCompilerExtensionVersion = "1.5.15" // Compatible con Kotlin 2.0.21
     }
 
     packaging {
@@ -57,9 +58,11 @@ dependencies {
     // Core & Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.compose.runtime.livedata)
     implementation(libs.androidx.activity.compose)
 
-    // Compose BOM (mantiene versiones sincronizadas)
+    // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
 
     // Compose UI
@@ -68,24 +71,28 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
 
-    // Material y Material3
+    // Material
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material)
-    implementation(libs.androidx.media.media)
-
 
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
 
-    // ExoPlayer / Media3
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
+    // Media3 (ExoPlayer)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media.media)
 
-
-    implementation(libs.androidx.lifecycle.livedata.ktx)
-    implementation(libs.androidx.compose.runtime.livedata)
-
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     // Testing
     testImplementation(libs.junit)
