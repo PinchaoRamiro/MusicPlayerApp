@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -109,7 +108,6 @@ fun getTitleForRoute(
         MusicNavDestinations.MUSIC_LIST_ROUTE -> "All music"
         MusicNavDestinations.PLAYLISTS_ROUTE -> "My Playlist"
         else -> {
-            // Lógica para obtener el nombre de la playlist si estamos en su pantalla de detalles
             val playlistId = navController.currentBackStackEntry
                 ?.arguments?.getString("playlistId")?.toLong()
 

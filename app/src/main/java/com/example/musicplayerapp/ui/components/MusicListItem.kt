@@ -19,7 +19,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.R
-import androidx.media3.session.R as IconR
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.utils.formatDuration
 
@@ -83,7 +82,7 @@ fun MusicListItem(
         // Botón de menú opcional
         if (showMenu && onMenuClick != null) {
             Icon(
-                painter = painterResource(id = IconR.drawable.media3_icon_playlist_add),
+                painter = painterResource(id = R.drawable.more_vert_points),
                 contentDescription = "Menu",
                 modifier = Modifier
                     .padding(start = 8.dp)

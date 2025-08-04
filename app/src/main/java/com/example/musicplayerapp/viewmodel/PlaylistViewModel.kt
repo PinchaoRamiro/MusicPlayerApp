@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.musicplayerapp.data.database.entities.PlaylistEntity
 import com.example.musicplayerapp.data.database.entities.PlaylistWithCount
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.data.model.Playlist
@@ -90,9 +89,25 @@ class PlaylistViewModel @Inject constructor(
     fun getPlaylistTracks(playlistId: Long): StateFlow<List<MusicTrack>> {
         val tracksFlow = MutableStateFlow<List<MusicTrack>>(emptyList())
         viewModelScope.launch {
-            playlistUseCases.getPlaylistWithTracks(playlistId)
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            playlistUseCases.getPlaylistWithTracks(playlistId).collect { playlistWithTracks ->
+                val tracks = playlistWithTracks?.tracks?.map { trackEntity -> MusicTrack(
+                    id = trackEntity.trackId,
+                    title = trackEntity.title,
+                    artist = trackEntity.artist,
+                    album = trackEntity.album,
+                    duration = trackEntity.duration,
+                    data = trackEntity.data
+                ) }
+                if (tracks != null) {
+                    tracksFlow.value = tracks
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
+                Log.d("PlaylistViewModel", "Playlist updated: $tracks")
+            }
         }
-        Log.d("PlaylistViewModel", "getPlaylistTracks called with playlistId: $playlistId And items: $tracksFlow")
         return tracksFlow.asStateFlow()
     }
+
+
 }

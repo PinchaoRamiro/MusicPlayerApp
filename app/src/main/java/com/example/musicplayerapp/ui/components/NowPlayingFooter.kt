@@ -23,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.R
-import androidx.media3.session.R as IconR
 import com.example.musicplayerapp.data.model.MusicTrack
 
 @Composable
@@ -86,29 +85,29 @@ fun NowPlayingFooter(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onToggleShuffleClick) {
                     Icon(
-                        painter = if(isShuffleEnabled) painterResource(id = IconR.drawable.media3_icon_shuffle_on) else painterResource(id = IconR.drawable.media3_icon_shuffle_off),
+                        painter =  painterResource(id = R.drawable.shuffle_24px),
                         contentDescription = "Toggle Shuffle",
-                        tint = MaterialTheme.colorScheme.primary ,
+                        tint = if(isShuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 IconButton(onClick = onPreviousClick) {
                     Icon(
-                        painter = painterResource(id = IconR.drawable.media3_icon_previous),
+                        painter = painterResource(id = R.drawable.skip_previous),
                         contentDescription = "Previous",
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
                 IconButton(onClick = onPlayPauseClick) {
                     Icon(
-                        painter = if (!isPlaying) painterResource(id = IconR.drawable.media3_icon_play) else painterResource(id = IconR.drawable.media3_icon_pause),
+                        painter = if (!isPlaying) painterResource(id = R.drawable.play_arrow) else painterResource(id = R.drawable.pause),
                         contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = if (!isPlaying) MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary,
                     )
                 }
                 IconButton(onClick = onNextClick) {
                     Icon(
-                        painter = painterResource(id = IconR.drawable.media3_icon_next),
+                        painter = painterResource(id = R.drawable.skip_next),
                         contentDescription = "Next",
                         tint = MaterialTheme.colorScheme.primary,
                     )

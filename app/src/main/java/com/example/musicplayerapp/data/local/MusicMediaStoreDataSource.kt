@@ -2,11 +2,15 @@ package com.example.musicplayerapp.data.local
 
 import android.content.Context
 import android.provider.MediaStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.example.musicplayerapp.data.database.entities.MusicTrackEntity as TrackEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class MusicMediaStoreDataSource(private val context: Context) {
+class MusicMediaStoreDataSource @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     suspend fun getAllTracks(): List<TrackEntity> = withContext(Dispatchers.IO) {
         val tracks = mutableListOf<TrackEntity>()

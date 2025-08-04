@@ -1,14 +1,11 @@
 package com.example.musicplayerapp.viewmodel
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.domain.usecase.FavoriteUseCases
 import com.example.musicplayerapp.domain.usecase.ScanMusicUseCase
-import com.example.musicplayerapp.player.service.MediaPlaybackService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,53 +21,38 @@ data class MusicListUiState(
 class MusicListViewModel @Inject constructor(
     application: Application,
     private val scanMusicUseCase: ScanMusicUseCase,
-    private val favoriteUseCases: FavoriteUseCases
+    private val favoriteUseCases: FavoriteUseCases,
+    private val musicServiceConnection: MusicServiceConnection
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(MusicListUiState())
     val uiState: StateFlow<MusicListUiState> = _uiState.asStateFlow()
 
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
-
-    private val _currentTrack = MutableStateFlow<MusicTrack?>(null)
-    val currentTrack: StateFlow<MusicTrack?> = _currentTrack.asStateFlow()
-
-    private val _isShuffleModeEnabled = MutableStateFlow(false)
-    val isShuffleModeEnabled: StateFlow<Boolean> = _isShuffleModeEnabled.asStateFlow()
+    val currentTrack: StateFlow<MusicTrack?> = musicServiceConnection.currentTrack
+    val isPlaying: StateFlow<Boolean> = musicServiceConnection.isPlaying
+    val isShuffleModeEnabled: StateFlow<Boolean> = musicServiceConnection.isShuffleEnabled
 
     private val _favoriteTracks = MutableStateFlow<List<Long>>(emptyList())
     val favoriteTracks: StateFlow<List<Long>> = _favoriteTracks.asStateFlow()
 
-    fun playTrack(context: Context, track: MusicTrack) {
-        Log.d("MusicViewModel", "track: $track")
-        MediaPlaybackService.play(context, track)
-        _isPlaying.value = true
-        _currentTrack.value = track
+    init {
+        musicServiceConnection.connect()
+        refreshFavorites()
     }
 
-    fun pauseTrack(context: Context) {
-        MediaPlaybackService.pause(context)
-        _isPlaying.value = false
-    }
+    fun playTrack(track: MusicTrack) = musicServiceConnection.play(track)
+    fun pauseTrack() = musicServiceConnection.pause()
+    fun nextTrack() = musicServiceConnection.next()
+    fun previousTrack() = musicServiceConnection.previous()
+    fun toggleShuffle() = musicServiceConnection.toggleShuffle()
 
-    fun nextTrack(context: Context) {
-        MediaPlaybackService.next(context)
-    }
-
-    fun previousTrack(context: Context) {
-        MediaPlaybackService.previous(context)
-    }
-
-    fun toggleShuffle(context: Context) {
-        MediaPlaybackService.toggleShuffle(context)
-        _isShuffleModeEnabled.value = !_isShuffleModeEnabled.value
+    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int) {
+        musicServiceConnection.setPlaylist(tracks, startIndex)
     }
 
     fun toggleFavorite(trackId: String) {
         viewModelScope.launch {
-            val isFav = favoriteUseCases.isFavorite(trackId)
-            if (isFav) {
+            if (favoriteUseCases.isFavorite(trackId)) {
                 favoriteUseCases.removeFavorite(trackId)
             } else {
                 favoriteUseCases.addFavorite(trackId)
@@ -93,18 +75,10 @@ class MusicListViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val tracks = scanMusicUseCase()
-
                 if (tracks.isNotEmpty()) {
-                    MediaPlaybackService.setPlaylistOnly(getApplication(), tracks, startIndex = 0)
+                    musicServiceConnection.setPlaylist(tracks, startIndex = 0)
                 }
-
-                _uiState.value = MusicListUiState(
-                    isLoading = false,
-                    tracks = tracks
-                )
-
-                refreshFavorites()
-
+                _uiState.value = MusicListUiState(isLoading = false, tracks = tracks)
             } catch (e: Exception) {
                 _uiState.value = MusicListUiState(
                     isLoading = false,
@@ -112,5 +86,10 @@ class MusicListViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        musicServiceConnection.disconnect()
     }
 }

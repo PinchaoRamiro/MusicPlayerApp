@@ -1,7 +1,5 @@
 package com.example.musicplayerapp.di
 
-import android.content.Context
-import com.example.musicplayerapp.data.local.MusicMediaStoreDataSource
 import com.example.musicplayerapp.data.repository.MusicRepository
 import com.example.musicplayerapp.data.repository.PlaylistRepository
 import com.example.musicplayerapp.domain.usecase.*
@@ -10,8 +8,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import dagger.hilt.android.qualifiers.ApplicationContext
-
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -39,13 +35,6 @@ object UseCaseModule {
             isFavorite = IsFavoriteUseCase(repository),
             getFavorites = GetFavoritesUseCase(repository)
         )
-    }
-
-    @Provides
-    fun provideMediaStoreDataSource(
-        @ApplicationContext context: Context
-    ): MusicMediaStoreDataSource {
-        return MusicMediaStoreDataSource(context)
     }
 
 }

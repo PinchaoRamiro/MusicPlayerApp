@@ -21,12 +21,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.musicplayerapp.data.model.MusicTrack
+import com.example.musicplayerapp.ui.components.LoadingContent
 import com.example.musicplayerapp.ui.components.MusicListItem
+import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.nav.MusicNavDestinations
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
@@ -36,17 +37,37 @@ import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 @Composable
 fun PlaylistDetailScreen(
     playlistId: Long,
-    navController: NavController, // ⬅️ añadimos para navegar
+    navController: NavController,
     musicListViewModel: MusicListViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val tracksState by playlistViewModel.getPlaylistTracks(playlistId).collectAsState()
+    val isPlaying by musicListViewModel.isPlaying.collectAsState()
+    val currentTrack by musicListViewModel.currentTrack.collectAsState()
+    val isShuffleEnabled by musicListViewModel.isShuffleModeEnabled.collectAsState()
+    val uiState by playlistViewModel.uiState.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Log.d("PlaylistDetailScreen", "Playlist ID: $playlistId")
         Log.d("PlaylistDetailScreen", "Items: $tracksState")
+        Log.d("PlaylistDetailScreen", "Current track: $currentTrack")
         Scaffold(
+            bottomBar = {
+                NowPlayingFooter(
+                    currentTrack = currentTrack,
+                    isPlaying = isPlaying,
+                    isShuffleEnabled = isShuffleEnabled,
+                    onPlayPauseClick = {
+                        if (isPlaying) musicListViewModel.pauseTrack()
+                        else currentTrack?.let { musicListViewModel.playTrack( it) }
+                    },
+                    onNextClick = {
+                        musicListViewModel.nextTrack()
+                                  },
+                    onPreviousClick = { musicListViewModel.previousTrack()},
+                    onToggleShuffleClick = { musicListViewModel.toggleShuffle() }
+                )
+            },
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
@@ -58,6 +79,7 @@ fun PlaylistDetailScreen(
             }
         ) { padding ->
             when {
+                uiState.isLoading -> LoadingContent()
                 tracksState.isEmpty() -> {
                     Box(
                         modifier = Modifier
@@ -84,7 +106,7 @@ fun PlaylistDetailScreen(
                             MusicListItem(
                                 track = track,
                                 onClick = {
-                                    musicListViewModel.playTrack(context = context, track = track)
+                                    musicListViewModel.setPlaylist( tracksState, tracksState.indexOf(track))
                                 }
                             )
                         }

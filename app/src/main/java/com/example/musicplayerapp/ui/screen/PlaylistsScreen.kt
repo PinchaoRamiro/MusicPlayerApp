@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.musicplayerapp.data.database.entities.PlaylistWithCount
+import com.example.musicplayerapp.ui.components.LoadingContent
 import com.example.musicplayerapp.ui.components.PlaylistItem
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
@@ -39,16 +40,7 @@ fun PlaylistsScreen(
             }
         ) { paddingValues ->
             when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
+                uiState.isLoading -> LoadingContent()
 
                 uiState.playlists.isEmpty() -> {
                     EmptyPlaylistsContent(

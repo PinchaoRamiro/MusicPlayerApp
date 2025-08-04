@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.media3.session.R
+import com.example.musicplayerapp.R
 import com.example.musicplayerapp.data.database.entities.PlaylistWithCount
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
 
@@ -37,10 +37,10 @@ fun PlaylistItem(playlist: PlaylistWithCount, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.media3_icon_album),
+                painter = painterResource(id = R.drawable.play_list),
                 contentDescription = "Playlist icon",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {

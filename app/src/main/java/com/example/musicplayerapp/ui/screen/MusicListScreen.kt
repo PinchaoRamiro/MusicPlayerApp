@@ -1,5 +1,6 @@
 package com.example.musicplayerapp.ui.screen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.components.MusicListItem
@@ -22,7 +24,7 @@ import com.example.musicplayerapp.viewmodel.MusicListViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicListScreen(
-    viewModel: MusicListViewModel,
+    viewModel: MusicListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
@@ -37,12 +39,12 @@ fun MusicListScreen(
                     isPlaying = isPlaying,
                     isShuffleEnabled = isShuffleEnabled,
                     onPlayPauseClick = {
-                        if (isPlaying) viewModel.pauseTrack(viewModel.getApplication())
-                        else currentTrack?.let { viewModel.playTrack(viewModel.getApplication(), it) }
+                        if (isPlaying) viewModel.pauseTrack()
+                        else currentTrack?.let { viewModel.playTrack( it) }
                     },
-                    onNextClick = { viewModel.nextTrack(viewModel.getApplication()) },
-                    onPreviousClick = { viewModel.previousTrack(viewModel.getApplication()) },
-                    onToggleShuffleClick = { viewModel.toggleShuffle(viewModel.getApplication()) }
+                    onNextClick = { viewModel.nextTrack() },
+                    onPreviousClick = { viewModel.previousTrack() },
+                    onToggleShuffleClick = { viewModel.toggleShuffle() }
                 )
             }
         ) { paddingValues ->
@@ -52,15 +54,13 @@ fun MusicListScreen(
                     .padding(paddingValues)
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                if (uiState.isLoading) {
-                    LoadingContent()
-                } else if (uiState.error != null) {
-                    ErrorContent(uiState.error!!)
-                } else {
-                    MusicListContent(
+                when {
+                    uiState.isLoading -> LoadingContent()
+                    uiState.error != null -> ErrorContent(uiState.error!!)
+                    else -> MusicListContent(
                         tracks = uiState.tracks,
                         onTrackClick = { track ->
-                            viewModel.playTrack(viewModel.getApplication(), track)
+                            viewModel.setPlaylist(uiState.tracks, uiState.tracks.indexOf(track))
                         }
                     )
                 }
@@ -94,7 +94,7 @@ fun MusicListContent(tracks: List<MusicTrack>, onTrackClick: (MusicTrack) -> Uni
                 track = track,
                 onClick = { onTrackClick(track) },
                 showMenu = true,
-                onMenuClick = null
+                onMenuClick = { Log.d("MusicListScreen", "Menu click for ${track.title}") }
             )
         }
     }
@@ -110,7 +110,7 @@ fun MusicListScreenPreview() {
         MusicTrack("4", "Blinding Lights", "The Weeknd", "After Hours", 275000, ""),
         MusicTrack("5", "Enemy", "Imagine Dragons, J.I.D", "Arcane", 275000, ""),
         MusicTrack("6", "Old Town Road", "Lil Nas X, Billy Ray Cyrus", "7", 275000, ""),
-        MusicTrack("7", "Venom", "Eminem", "Venom", 275000, ""),
+        MusicTrack("7", "Venom", "Eminem", "Venom", 275000, "")
     )
     MaterialTheme(colorScheme = DarkColorScheme) {
         MusicListContent(tracks = dummyTracks, onTrackClick = {})

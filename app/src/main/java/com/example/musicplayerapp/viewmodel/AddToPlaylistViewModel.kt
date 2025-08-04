@@ -1,10 +1,12 @@
 package com.example.musicplayerapp.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.domain.usecase.ScanMusicUseCase
 import com.example.musicplayerapp.domain.usecase.PlaylistUseCases
+import com.example.musicplayerapp.viewmodel.MusicListViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,10 +52,12 @@ class AddToPlaylistViewModel @Inject constructor(
     fun addSelectedTracksToPlaylist(playlistId: Long, onComplete: () -> Unit) {
         viewModelScope.launch {
             val selectedTracks = _uiState.value.tracks.filter { it.id in _uiState.value.selectedTrackIds }
-            selectedTracks.map { track ->
+            selectedTracks.forEach { track ->
+                Log.d("AddToPlaylistVM", "Adding track ${track.title} (${track.id}) to playlist $playlistId")
                 playlistUseCases.addTrackToPlaylist(playlistId, track.id)
             }
             onComplete()
         }
     }
+
 }
