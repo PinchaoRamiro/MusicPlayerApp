@@ -24,6 +24,7 @@ import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.components.PlaylistSelectionModal
 import com.example.musicplayerapp.ui.components.TrackOptionsModal
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
+import com.example.musicplayerapp.viewmodel.FavoritesViewModel
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
 import com.example.musicplayerapp.viewmodel.MusicServiceConnection
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
@@ -84,6 +85,7 @@ fun MusicListContent(
     onTrackClick: (MusicTrack) -> Unit,
     viewModel: MusicListViewModel = hiltViewModel(),
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
+    favoritesViewModel: FavoritesViewModel = hiltViewModel(),
     musicServiceConnection: MusicServiceConnection
 ) {
     var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
@@ -129,7 +131,7 @@ fun MusicListContent(
             onDismiss = { isSheetOpen = false },
             onAddToFavorites = {
                 Log.d("MusicListScreen", "Añadir a favoritos: ${selectedTrack!!.title}")
-                viewModel.toggleFavorite(selectedTrack?.id ?: "")
+                favoritesViewModel.toggleFavorite(trackId = selectedTrack!!.id)
                 isSheetOpen = false
             },
             onAddToPlaylist = {

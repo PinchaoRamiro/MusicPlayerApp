@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.model.MusicTrack
-import com.example.musicplayerapp.domain.usecase.FavoriteUseCases
 import com.example.musicplayerapp.domain.usecase.ScanMusicUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -21,7 +20,6 @@ data class MusicListUiState(
 class MusicListViewModel @Inject constructor(
     application: Application,
     private val scanMusicUseCase: ScanMusicUseCase,
-    private val favoriteUseCases: FavoriteUseCases,
     internal val musicServiceConnection: MusicServiceConnection
 ) : AndroidViewModel(application) {
 
@@ -32,14 +30,13 @@ class MusicListViewModel @Inject constructor(
     val isPlaying: StateFlow<Boolean> = musicServiceConnection.isPlaying
     val isShuffleModeEnabled: StateFlow<Boolean> = musicServiceConnection.isShuffleEnabled
 
-    val playlistId : StateFlow<Long?> = musicServiceConnection.playlistidRec
+    val playlistId : StateFlow<Long?> = musicServiceConnection.playlistRec
 
     private val _favoriteTracks = MutableStateFlow<List<Long>>(emptyList())
     val favoriteTracks: StateFlow<List<Long>> = _favoriteTracks.asStateFlow()
 
     init {
         musicServiceConnection.connect()
-        refreshFavorites()
     }
 
     fun playTrack(track: MusicTrack) = musicServiceConnection.play(track)
@@ -50,46 +47,6 @@ class MusicListViewModel @Inject constructor(
 
     fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
         musicServiceConnection.setPlaylist(tracks, startIndex, playlistId)
-    }
-
-    fun toggleFavorite(trackId: String) {
-        if (trackId.isEmpty()) return
-        if (favoriteTracks.value.contains(trackId.toLong())) {
-            removeFavorite(trackId)
-        } else {
-            addFavorite(trackId)
-        }
-        viewModelScope.launch {
-            if (favoriteUseCases.isFavorite(trackId)) {
-                favoriteUseCases.removeFavorite(trackId)
-            } else {
-                favoriteUseCases.addFavorite(trackId)
-            }
-            refreshFavorites()
-        }
-    }
-
-    private fun addFavorite(trackId: String) {
-        viewModelScope.launch {
-            favoriteUseCases.addFavorite(trackId)
-            refreshFavorites()
-        }
-    }
-
-    private fun removeFavorite(trackId: String) {
-        viewModelScope.launch {
-            favoriteUseCases.removeFavorite(trackId)
-            refreshFavorites()
-        }
-    }
-
-    private fun refreshFavorites() {
-        viewModelScope.launch {
-            favoriteUseCases.getFavorites()
-                .collect { list ->
-                    _favoriteTracks.value = list.map { it.trackId.toLong() }
-                }
-        }
     }
 
     fun loadMusic() {

@@ -30,7 +30,7 @@ class MusicServiceConnection @Inject constructor(
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
     private var allTracks = mutableListOf<MusicTrack>()
-    var playlistidRec = MutableStateFlow<Long?>(null)
+    var playlistRec = MutableStateFlow<Long?>(null)
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -167,7 +167,7 @@ class MusicServiceConnection @Inject constructor(
         if(allTracks == tracks){
             return
         }
-        playlistidRec = MutableStateFlow(playlistId)
+        playlistRec = MutableStateFlow(playlistId)
 
         val mediaItems = tracks.map { track ->
             track.toMediaItem()

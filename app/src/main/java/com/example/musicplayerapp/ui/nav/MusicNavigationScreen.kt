@@ -21,30 +21,36 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.musicplayerapp.ui.screen.AddToPlaylistScreen
+import com.example.musicplayerapp.ui.screen.FavoritesScreen
 import com.example.musicplayerapp.ui.screen.MusicListScreen
 import com.example.musicplayerapp.ui.screen.PlaylistDetailScreen
 import com.example.musicplayerapp.ui.screen.PlaylistsScreen
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
+import com.example.musicplayerapp.viewmodel.FavoritesViewModel
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 
 object MusicNavDestinations {
     const val MUSIC_LIST_ROUTE = "music_list"
     const val PLAYLISTS_ROUTE = "playlists"
+    const val FAVORITES_ROUTE = "favorites"
     const val PLAYLIST_DETAIL_ROUTE = "playlist_detail"
     const val ADD_TO_PLAYLIST_ROUTE = "add_to_playlist"
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicNavigationScreen(
     musicListViewModel: MusicListViewModel,
-    playlistViewModel: PlaylistViewModel
+    playlistViewModel: PlaylistViewModel,
+    favoritesViewModel: FavoritesViewModel
 ) {
     val navController = rememberNavController()
     val tabs = listOf(
         "Canciones" to MusicNavDestinations.MUSIC_LIST_ROUTE,
-        "Listas" to MusicNavDestinations.PLAYLISTS_ROUTE
+        "Listas" to MusicNavDestinations.PLAYLISTS_ROUTE,
+        "Favoritos" to MusicNavDestinations.FAVORITES_ROUTE
     )
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
@@ -92,6 +98,12 @@ fun MusicNavigationScreen(
                             onPlaylistClick = { playlist ->
                                 navController.navigate("${MusicNavDestinations.PLAYLIST_DETAIL_ROUTE}/${playlist.playlistId}")
                             }
+                        )
+                    }
+                    composable(route = MusicNavDestinations.FAVORITES_ROUTE) {
+                        FavoritesScreen(
+                            favoritesViewModel = favoritesViewModel,
+                            musicServiceConnection = musicListViewModel.musicServiceConnection
                         )
                     }
                     composable(
