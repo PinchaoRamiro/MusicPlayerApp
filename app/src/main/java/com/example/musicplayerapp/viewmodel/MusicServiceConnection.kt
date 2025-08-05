@@ -3,6 +3,7 @@ package com.example.musicplayerapp.viewmodel
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -17,6 +18,13 @@ import javax.inject.Singleton
 import androidx.core.net.toUri
 import androidx.media3.common.MediaMetadata
 import com.example.musicplayerapp.player.service.PlaybackService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 @Singleton
 class MusicServiceConnection @Inject constructor(
@@ -29,6 +37,9 @@ class MusicServiceConnection @Inject constructor(
     private val _currentPosition = MutableStateFlow(0L)
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
+    private val _currentDuration = MutableStateFlow(0L)
+    val currentDuration: StateFlow<Long> = _currentDuration.asStateFlow()
+
     private var allTracks = mutableListOf<MusicTrack>()
     var playlistRec = MutableStateFlow<Long?>(null)
 
@@ -39,6 +50,27 @@ class MusicServiceConnection @Inject constructor(
     val isShuffleEnabled: StateFlow<Boolean> = _isShuffleEnabled.asStateFlow()
 
     private var controller: MediaController? = null
+
+    private var progressJob: Job? = null
+
+    private fun startProgressUpdates() {
+        progressJob?.cancel()
+        progressJob = CoroutineScope(Dispatchers.Main).launch {
+            while (isActive) {
+                controller?.let { ctrl ->
+                    if (ctrl.isPlaying) {
+                        _currentPosition.update { ctrl.currentPosition }
+                        _currentDuration.update {
+                            ctrl.duration.coerceAtLeast(1L)
+
+                        }
+                        Log.d("MusicServiceConnection", "Duration: ${ctrl.duration}")
+                    }
+                }
+                delay(500) // Actualiza cada medio segundo
+            }
+        }
+    }
 
     fun seekTo(position: Long) {
         controller?.seekTo(position)
@@ -97,6 +129,7 @@ class MusicServiceConnection @Inject constructor(
             try {
                 mediaController = futureController.get()
                 controller = mediaController
+                startProgressUpdates()
             }
             catch (e: Exception) {
                 return@addListener
@@ -116,6 +149,7 @@ class MusicServiceConnection @Inject constructor(
                         )
                     }
                     _currentPosition.value = mediaController.currentPosition
+                    _currentDuration.value = mediaController.duration
                 }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -130,6 +164,7 @@ class MusicServiceConnection @Inject constructor(
     }
 
     fun disconnect() {
+        progressJob?.cancel()
         controller?.release()
         controller = null
     }

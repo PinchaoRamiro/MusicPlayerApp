@@ -15,15 +15,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.musicplayerapp.R
 import com.example.musicplayerapp.data.model.MusicTrack
+
+import com.example.musicplayerapp.ui.nav.MusicNavDestinations
 
 @Composable
 fun NowPlayingFooter(
@@ -33,7 +35,8 @@ fun NowPlayingFooter(
     onPlayPauseClick: () -> Unit,
     onNextClick: () -> Unit,
     onPreviousClick: () -> Unit,
-    onToggleShuffleClick: () -> Unit
+    onToggleShuffleClick: () -> Unit,
+    navController: NavController
 ) {
     if (currentTrack == null) {
         return
@@ -43,9 +46,12 @@ fun NowPlayingFooter(
         modifier = Modifier
             .fillMaxWidth()
             .height(72.dp),
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
-        shadowElevation = 8.dp
+        color = MaterialTheme.colorScheme.background,
+        onClick = {
+            navController.navigate(MusicNavDestinations.NOW_PLAYING_ROUTE)
+        }
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxSize()

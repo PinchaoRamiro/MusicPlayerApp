@@ -27,6 +27,8 @@ class MusicListViewModel @Inject constructor(
     val uiState: StateFlow<MusicListUiState> = _uiState.asStateFlow()
 
     val currentTrack: StateFlow<MusicTrack?> = musicServiceConnection.currentTrack
+    val currentPosition: StateFlow<Long> = musicServiceConnection.currentPosition
+    val currentDuration: StateFlow<Long> = musicServiceConnection.currentDuration
     val isPlaying: StateFlow<Boolean> = musicServiceConnection.isPlaying
     val isShuffleModeEnabled: StateFlow<Boolean> = musicServiceConnection.isShuffleEnabled
 

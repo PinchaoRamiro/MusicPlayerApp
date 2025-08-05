@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.MusicListItem
 import com.example.musicplayerapp.ui.components.ErrorContent
@@ -40,40 +42,23 @@ fun MusicListScreen(
     val isShuffleEnabled by viewModel.isShuffleModeEnabled.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
-        Scaffold(
-            bottomBar = {
-                NowPlayingFooter(
-                    currentTrack = currentTrack,
-                    isPlaying = isPlaying,
-                    isShuffleEnabled = isShuffleEnabled,
-                    onPlayPauseClick = {
-                        if (isPlaying) viewModel.pauseTrack()
-                        else currentTrack?.let { viewModel.playTrack( it) }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            when {
+                uiState.isLoading -> LoadingContent()
+                uiState.error != null -> ErrorContent(uiState.error!!)
+                else -> MusicListContent(
+                    tracks = uiState.tracks,
+                    onTrackClick = { track ->
+                        viewModel.playTrack(track)
                     },
-                    onNextClick = { viewModel.nextTrack() },
-                    onPreviousClick = { viewModel.previousTrack() },
-                    onToggleShuffleClick = { viewModel.toggleShuffle() }
-                )
-            }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                when {
-                    uiState.isLoading -> LoadingContent()
-                    uiState.error != null -> ErrorContent(uiState.error!!)
-                    else -> MusicListContent(
-                        tracks = uiState.tracks,
-                        onTrackClick = { track ->
-                            viewModel.playTrack(track)
-                        },
-                        musicServiceConnection = viewModel.musicServiceConnection
+                    musicServiceConnection = viewModel.musicServiceConnection
 
-                    )
-                }
+                )
             }
         }
     }

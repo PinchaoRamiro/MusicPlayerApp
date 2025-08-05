@@ -48,12 +48,10 @@ fun PlaylistDetailScreen(
     musicListViewModel: MusicListViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
     favoritesViewModel: FavoritesViewModel = hiltViewModel(),
-    musicServiceConnection: MusicServiceConnection
+    musicServiceConnection: MusicServiceConnection,
 ) {
     val tracksState by playlistViewModel.getPlaylistTracks(playlistId).collectAsState()
-    val isPlaying by musicListViewModel.isPlaying.collectAsState()
     val currentTrack by musicListViewModel.currentTrack.collectAsState()
-    val isShuffleEnabled by musicListViewModel.isShuffleModeEnabled.collectAsState()
     val uiState by playlistViewModel.uiState.collectAsState()
 
     var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
@@ -66,22 +64,6 @@ fun PlaylistDetailScreen(
         Log.d("PlaylistDetailScreen", "Items: $tracksState")
         Log.d("PlaylistDetailScreen", "Current track: $currentTrack")
         Scaffold(
-            bottomBar = {
-                NowPlayingFooter(
-                    currentTrack = currentTrack,
-                    isPlaying = isPlaying,
-                    isShuffleEnabled = isShuffleEnabled,
-                    onPlayPauseClick = {
-                        if (isPlaying) musicListViewModel.pauseTrack()
-                        else currentTrack?.let { musicListViewModel.playTrack( it) }
-                    },
-                    onNextClick = {
-                        musicListViewModel.nextTrack()
-                                  },
-                    onPreviousClick = { musicListViewModel.previousTrack()},
-                    onToggleShuffleClick = { musicListViewModel.toggleShuffle() }
-                )
-            },
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
