@@ -19,6 +19,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,9 +31,13 @@ import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.LoadingContent
 import com.example.musicplayerapp.ui.components.MusicListItem
 import com.example.musicplayerapp.ui.components.NowPlayingFooter
+import com.example.musicplayerapp.ui.components.PlaylistSelectionModal
+import com.example.musicplayerapp.ui.components.TrackOptionsModal
 import com.example.musicplayerapp.ui.nav.MusicNavDestinations
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
+import com.example.musicplayerapp.viewmodel.FavoritesViewModel
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
+import com.example.musicplayerapp.viewmodel.MusicServiceConnection
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,13 +46,20 @@ fun PlaylistDetailScreen(
     playlistId: Long,
     navController: NavController,
     musicListViewModel: MusicListViewModel,
-    playlistViewModel: PlaylistViewModel = hiltViewModel()
+    playlistViewModel: PlaylistViewModel = hiltViewModel(),
+    favoritesViewModel: FavoritesViewModel = hiltViewModel(),
+    musicServiceConnection: MusicServiceConnection
 ) {
     val tracksState by playlistViewModel.getPlaylistTracks(playlistId).collectAsState()
     val isPlaying by musicListViewModel.isPlaying.collectAsState()
     val currentTrack by musicListViewModel.currentTrack.collectAsState()
     val isShuffleEnabled by musicListViewModel.isShuffleModeEnabled.collectAsState()
     val uiState by playlistViewModel.uiState.collectAsState()
+
+    var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
+    var showMenuModal by remember { mutableStateOf(false) }
+    var showPlaylistModal by remember { mutableStateOf(false) }
+    val allPlaylists = playlistViewModel.uiState.collectAsState().value.playlists
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Log.d("PlaylistDetailScreen", "Playlist ID: $playlistId")
@@ -111,8 +125,8 @@ fun PlaylistDetailScreen(
                                 },
                                 showMenu = true,
                                 onMenuClick = {
-                                    playlistViewModel.removeTrackFromPlaylist(playlistId, track.id)
-
+                                    selectedTrack = track
+                                    showMenuModal = true
                                 }
                             )
                         }
@@ -120,5 +134,43 @@ fun PlaylistDetailScreen(
                 }
             }
         }
+        if (showMenuModal) {
+        TrackOptionsModal(
+            track = selectedTrack!!,
+            onDismiss = { showMenuModal = false },
+            onAddToFavorites = {
+                Log.d("MusicListScreen", "Añadir a favoritos: ${selectedTrack!!.title}")
+                favoritesViewModel.toggleFavorite(trackId = selectedTrack!!.id)
+                showMenuModal = false
+            },
+            onAddToPlaylist = {
+                Log.d("MusicListScreen", "Añadir a playlist: ${selectedTrack!!.title}")
+                showPlaylistModal = true
+            },
+
+            onRemoveFromPlaylist = {
+                Log.d("MusicListScreen", "Eliminar de playlist: ${selectedTrack!!.title}")
+                playlistViewModel.removeTrackFromPlaylist( playlistId, selectedTrack!!.id)
+                showMenuModal = false
+            },
+            onPlayNext = {
+                Log.d("MusicListScreen", "Reproducir siguiente: ${selectedTrack!!.title}")
+                musicServiceConnection.queueNext(selectedTrack!!.id)
+                showMenuModal = false
+            }
+        )
+        if (showPlaylistModal && selectedTrack != null) {
+            Log.d("MusicListScreen", "Playlist modal: ${selectedTrack!!.title}")
+            PlaylistSelectionModal(
+                playlists = allPlaylists.map { it.playlistId to it.name },
+                onDismiss = { showPlaylistModal = false },
+                onPlaylistSelected = { playlistId ->
+                    playlistViewModel.addTrackToPlaylist(playlistId, selectedTrack!!)
+                    showPlaylistModal = false
+                }
+            )
+        }
+
+    }
     }
 }

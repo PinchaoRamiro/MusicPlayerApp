@@ -35,7 +35,7 @@ fun FavoritesScreen(
                     },
                     showMenu = true,
                     onMenuClick = {
-                        favoritesViewModel.toggleFavorite(track.id)
+                        favoritesViewModel.removeFavorite(track.id)
                     }
                 )
             }

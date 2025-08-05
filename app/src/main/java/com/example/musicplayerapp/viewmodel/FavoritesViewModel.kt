@@ -52,7 +52,7 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-    private fun removeFavorite(trackId: String) {
+    fun removeFavorite(trackId: String) {
         viewModelScope.launch {
             favoriteUseCases.removeFavorite(trackId)
             refreshFavorites()
@@ -69,7 +69,7 @@ class FavoritesViewModel @Inject constructor(
                     })
                     _uiState.value = _uiState.value.copy(isLoading = false)
                 }
-            }
+        }
     }
 
     private fun MusicTrackEntity.toMusicTrack(): MusicTrack {

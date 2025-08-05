@@ -102,7 +102,7 @@ fun NowPlayingFooter(
                     Icon(
                         painter = if (!isPlaying) painterResource(id = R.drawable.play_arrow) else painterResource(id = R.drawable.pause),
                         contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = if (!isPlaying) MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                 }
                 IconButton(onClick = onNextClick) {

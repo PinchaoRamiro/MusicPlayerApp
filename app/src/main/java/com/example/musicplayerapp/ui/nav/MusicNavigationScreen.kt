@@ -117,7 +117,9 @@ fun MusicNavigationScreen(
                                 playlistId = playlistId,
                                 musicListViewModel = musicListViewModel,
                                 playlistViewModel = playlistViewModel,
-                                navController = navController
+                                navController = navController,
+                                favoritesViewModel = favoritesViewModel,
+                                musicServiceConnection = musicListViewModel.musicServiceConnection
                             )
                         }
                     }
