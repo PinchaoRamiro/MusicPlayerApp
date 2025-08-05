@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import com.example.musicplayerapp.core.utils.PermissionsManager
+import com.example.musicplayerapp.ui.nav.MusicNavigationScreen
 import com.example.musicplayerapp.ui.nav.RootScreen
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
@@ -30,9 +31,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestPermissions()
         setContent {
-            RootScreen(
-                musicListViewModel = musicListViewModel,
-                playlistViewModel = playlistViewModel
+            MusicNavigationScreen(
+                playlistViewModel = playlistViewModel,
+                musicListViewModel = musicListViewModel
             )
         }
     }
