@@ -61,7 +61,9 @@ class PlaybackService : MediaLibraryService() {
             val mapped = mediaItems.map {
                 it.buildUpon()
                     .setMediaId(it.mediaId)
-                    .setUri(it.playbackProperties?.uri)
+                    .setUri(it.localConfiguration?.uri)
+                    .setMediaMetadata(it.mediaMetadata)
+                    /*.setUri(it.playbackProperties?.uri)*/
                     .build()
             }.toMutableList()
             return Futures.immediateFuture(mapped)
@@ -143,9 +145,5 @@ class PlaybackService : MediaLibraryService() {
         player.shuffleModeEnabled = shuffle
         player.prepare()
         player.play()
-    }
-
-    fun toggleShuffleMode() {
-        player.shuffleModeEnabled = !player.shuffleModeEnabled
     }
 }

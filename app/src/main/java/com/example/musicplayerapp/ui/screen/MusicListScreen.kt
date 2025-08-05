@@ -14,10 +14,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.musicplayerapp.data.model.MusicTrack
-import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.components.MusicListItem
 import com.example.musicplayerapp.ui.components.ErrorContent
 import com.example.musicplayerapp.ui.components.LoadingContent
+import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
 
@@ -30,6 +30,7 @@ fun MusicListScreen(
     val isPlaying by viewModel.isPlaying.collectAsState()
     val currentTrack by viewModel.currentTrack.collectAsState()
     val isShuffleEnabled by viewModel.isShuffleModeEnabled.collectAsState()
+    val currentPosition by viewModel.currentPosition.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
@@ -60,7 +61,7 @@ fun MusicListScreen(
                     else -> MusicListContent(
                         tracks = uiState.tracks,
                         onTrackClick = { track ->
-                            viewModel.setPlaylist(uiState.tracks, uiState.tracks.indexOf(track))
+                            viewModel.playTrack(track)
                         }
                     )
                 }

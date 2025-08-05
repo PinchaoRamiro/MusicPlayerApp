@@ -106,7 +106,13 @@ fun PlaylistDetailScreen(
                             MusicListItem(
                                 track = track,
                                 onClick = {
-                                    musicListViewModel.setPlaylist( tracksState, tracksState.indexOf(track))
+                                    musicListViewModel.setPlaylist(tracksState, tracksState.indexOf(track))
+                                    musicListViewModel.playTrack(track)
+                                },
+                                showMenu = true,
+                                onMenuClick = {
+                                    playlistViewModel.removeTrackFromPlaylist(playlistId, track.id)
+
                                 }
                             )
                         }

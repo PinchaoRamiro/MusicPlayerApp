@@ -22,13 +22,14 @@ class MusicListViewModel @Inject constructor(
     application: Application,
     private val scanMusicUseCase: ScanMusicUseCase,
     private val favoriteUseCases: FavoriteUseCases,
-    private val musicServiceConnection: MusicServiceConnection
+    internal val musicServiceConnection: MusicServiceConnection
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(MusicListUiState())
     val uiState: StateFlow<MusicListUiState> = _uiState.asStateFlow()
 
     val currentTrack: StateFlow<MusicTrack?> = musicServiceConnection.currentTrack
+    val currentPosition: StateFlow<Long> = musicServiceConnection.currentPosition
     val isPlaying: StateFlow<Boolean> = musicServiceConnection.isPlaying
     val isShuffleModeEnabled: StateFlow<Boolean> = musicServiceConnection.isShuffleEnabled
 

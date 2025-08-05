@@ -2,8 +2,7 @@ package com.example.musicplayerapp.viewmodel
 
 import android.content.ComponentName
 import android.content.Context
-import android.util.Log
-import androidx.annotation.Nullable
+import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -16,6 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.net.toUri
+import androidx.media3.common.MediaMetadata
+import com.example.musicplayerapp.player.service.PlaybackService
 
 @Singleton
 class MusicServiceConnection @Inject constructor(
@@ -24,6 +25,9 @@ class MusicServiceConnection @Inject constructor(
 
     private val _currentTrack = MutableStateFlow<MusicTrack?>(null)
     val currentTrack: StateFlow<MusicTrack?> = _currentTrack.asStateFlow()
+
+    private val _currentPosition = MutableStateFlow(0L)
+    val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
     private var allTracks = mutableListOf<MusicTrack>()
 
@@ -35,17 +39,42 @@ class MusicServiceConnection @Inject constructor(
 
     private var controller: MediaController? = null
 
+    fun seekTo(position: Long) {
+        controller?.seekTo(position)
+    }
+
+    fun getController(): MediaController? = controller
+
+    fun getCurrentMetadata(): MusicTrack? {
+        val item = controller?.currentMediaItem ?: return null
+        return MusicTrack(
+            id = item.mediaId,
+            title = item.mediaMetadata.title.toString(),
+            artist = item.mediaMetadata.artist.toString(),
+            album = item.mediaMetadata.albumTitle.toString(),
+            duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
+            data = item.localConfiguration?.uri.toString()
+        )
+    }
+
     fun connect() {
         val sessionToken = SessionToken(
             context,
-            ComponentName(context, com.example.musicplayerapp.player.service.PlaybackService::class.java)
+            ComponentName(context,PlaybackService::class.java)
         )
 
         val futureController = MediaController.Builder(context, sessionToken).buildAsync()
 
         futureController.addListener({
-            val mediaController = futureController.get()
-            controller = mediaController
+            var mediaController : MediaController?
+            try {
+                mediaController = futureController.get()
+                controller = mediaController
+            }
+            catch (e: Exception) {
+                return@addListener
+            }
+
 
             mediaController.addListener(object : Player.Listener {
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -59,6 +88,7 @@ class MusicServiceConnection @Inject constructor(
                             data = item.localConfiguration?.uri.toString()
                         )
                     }
+                    _currentPosition.value = mediaController.currentPosition
                 }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -78,32 +108,27 @@ class MusicServiceConnection @Inject constructor(
     }
 
     fun play(track: MusicTrack) {
-        Log.d("MusicServiceConnection", "Music play: $track")
-        controller?.setMediaItem(
-            MediaItem.Builder()
-                .setUri(track.data.toUri())
-                .setMediaId(track.id)
-                .setMediaMetadata(
-                    androidx.media3.common.MediaMetadata.Builder()
-                        .setTitle(track.title)
-                        .setArtist(track.artist)
-                        .setAlbumTitle(track.album)
-                        .build()
-                )
-                .build()
-        )
-        controller?.prepare()
-        controller?.play()
+        // Buscar si la canción ya está en la playlist
+        val index = allTracks.indexOfFirst { it.id == track.id }
+
+        if (index != -1 && controller != null) {
+            // Si existe → saltar a esa posición
+            controller?.seekTo(index, 0L)
+            controller?.play()
+        } else {
+            // Si no existe → reproducir como canción individual
+            controller?.setMediaItem(
+                track.toMediaItem()
+            )
+            controller?.prepare()
+            controller?.play()
+        }
     }
+
 
     fun pause() = controller?.pause()
     fun next() {
-        controller?.seekToNext()/*
-        val theNext: Int? = controller?.nextMediaItemIndex
-        var song: MusicTrack? = null
-        if(theNext != null){
-            song = allTracks[theNext]
-        }*/
+        controller?.seekToNext()
     }
     fun previous() = controller?.seekToPrevious()
 
@@ -112,23 +137,31 @@ class MusicServiceConnection @Inject constructor(
     }
 
     fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int) {
-        Log.d("MusicServiceConnection", "Setting playlist with ${tracks.toString()} tracks")
-        val mediaItems = tracks.map { track ->
-            MediaItem.Builder()
-                .setUri(track.data.toUri())
-                .setMediaId(track.id)
-                .setMediaMetadata(
-                    androidx.media3.common.MediaMetadata.Builder()
-                        .setTitle(track.title)
-                        .setArtist(track.artist)
-                        .setAlbumTitle(track.album)
-                        .build()
-                )
-                .build()
+        if(allTracks == tracks){
+            return
         }
-        allTracks = tracks as MutableList<MusicTrack>
+
+        val mediaItems = tracks.map { track ->
+            track.toMediaItem()
+        }
+        allTracks = tracks.toMutableList()
         controller?.setMediaItems(mediaItems, startIndex, 0L)
         controller?.prepare()
-        controller?.play()
+        _currentTrack.value = getCurrentMetadata()
+    }
+
+    private fun MusicTrack.toMediaItem(): MediaItem {
+        return MediaItem.Builder()
+            .setUri(this.data.toUri())
+            .setMediaId(this.id)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(this.title)
+                    .setArtist(this.artist)
+                    .setAlbumTitle(this.album)
+                    /*.setArtworkUri(this.data.toUri())*/
+                    .setExtras(Bundle().apply { putLong("duration", this@toMediaItem.duration) })
+                    .build()
+            ).build()
     }
 }

@@ -75,6 +75,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material)
 
+    // Images
+    implementation(libs.coil.compose)
+
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
 

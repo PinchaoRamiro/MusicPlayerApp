@@ -86,6 +86,18 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
+    fun removeTrackFromPlaylist(playlistId: Long, trackId: String) {
+        viewModelScope.launch {
+            val result = playlistUseCases.removeTrackFromPlaylist(playlistId, trackId)
+/*            if (result.isFailure) {
+                _uiState.value = _uiState.value.copy(
+                    error = result.exceptionOrNull()?.message ?: "Error al eliminar canción"
+                )
+            }*/
+            Log.d("PlaylistViewModel", "Track removed from playlist: $trackId")
+        }
+    }
+
     fun getPlaylistTracks(playlistId: Long): StateFlow<List<MusicTrack>> {
         val tracksFlow = MutableStateFlow<List<MusicTrack>>(emptyList())
         viewModelScope.launch {
