@@ -30,6 +30,7 @@ class MusicServiceConnection @Inject constructor(
     val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
 
     private var allTracks = mutableListOf<MusicTrack>()
+    var playlistidRec = MutableStateFlow<Long?>(null)
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -42,6 +43,32 @@ class MusicServiceConnection @Inject constructor(
     fun seekTo(position: Long) {
         controller?.seekTo(position)
     }
+
+    fun queueNext(trackId: String) {
+        val track = allTracks.find { it.id == trackId } ?: return
+        val mediaItem = track.toMediaItem()
+
+        val currentIndex = controller?.currentMediaItemIndex ?: return
+        val isShuffle = controller?.shuffleModeEnabled ?: false
+
+        if (isShuffle) {
+            // Si hay shuffle, se fuerza el modo ordenado temporalmente
+            controller?.shuffleModeEnabled = false
+        }
+
+        // Insertar el track justo después del actual
+        val insertIndex = currentIndex + 1
+        controller?.addMediaItem(insertIndex, mediaItem)
+
+        // También actualizamos la lista local para mantenerla sincronizada
+        allTracks.add(insertIndex, track)
+
+        if (isShuffle) {
+            // Restaurar el modo shuffle
+            controller?.shuffleModeEnabled = true
+        }
+    }
+
 
     fun getController(): MediaController? = controller
 
@@ -136,10 +163,11 @@ class MusicServiceConnection @Inject constructor(
         controller?.shuffleModeEnabled = !_isShuffleEnabled.value
     }
 
-    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int) {
+    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
         if(allTracks == tracks){
             return
         }
+        playlistidRec = MutableStateFlow(playlistId)
 
         val mediaItems = tracks.map { track ->
             track.toMediaItem()

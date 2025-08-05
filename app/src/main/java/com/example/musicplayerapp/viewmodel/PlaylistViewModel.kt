@@ -45,6 +45,7 @@ class PlaylistViewModel @Inject constructor(
                         isLoading = false
                     )
                 }
+
         }
     }
 
@@ -75,9 +76,9 @@ class PlaylistViewModel @Inject constructor(
         }
     }
 
-    fun addTrackToPlaylist(playlist: Playlist, track: MusicTrack) {
+    fun addTrackToPlaylist(playlist : Long, track: MusicTrack) {
         viewModelScope.launch {
-            val result = playlistUseCases.addTrackToPlaylist(playlist.id, track.id)
+            val result = playlistUseCases.addTrackToPlaylist(playlist, track.id)
             if (result.isFailure) {
                 _uiState.value = _uiState.value.copy(
                     error = result.exceptionOrNull()?.message ?: "Error al agregar canción"

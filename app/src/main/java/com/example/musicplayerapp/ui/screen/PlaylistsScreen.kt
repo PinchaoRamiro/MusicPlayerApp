@@ -24,7 +24,8 @@ import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 fun PlaylistsScreen(
     onPlaylistClick: (PlaylistWithCount) -> Unit,
     viewModel: PlaylistViewModel = hiltViewModel()
-) {
+
+    ) {
     val uiState by viewModel.uiState.collectAsState()
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
 

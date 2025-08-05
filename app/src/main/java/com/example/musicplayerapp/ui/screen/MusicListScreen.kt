@@ -9,6 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -18,8 +21,12 @@ import com.example.musicplayerapp.ui.components.MusicListItem
 import com.example.musicplayerapp.ui.components.ErrorContent
 import com.example.musicplayerapp.ui.components.LoadingContent
 import com.example.musicplayerapp.ui.components.NowPlayingFooter
+import com.example.musicplayerapp.ui.components.PlaylistSelectionModal
+import com.example.musicplayerapp.ui.components.TrackOptionsModal
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
+import com.example.musicplayerapp.viewmodel.MusicServiceConnection
+import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +37,6 @@ fun MusicListScreen(
     val isPlaying by viewModel.isPlaying.collectAsState()
     val currentTrack by viewModel.currentTrack.collectAsState()
     val isShuffleEnabled by viewModel.isShuffleModeEnabled.collectAsState()
-    val currentPosition by viewModel.currentPosition.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
@@ -62,7 +68,9 @@ fun MusicListScreen(
                         tracks = uiState.tracks,
                         onTrackClick = { track ->
                             viewModel.playTrack(track)
-                        }
+                        },
+                        musicServiceConnection = viewModel.musicServiceConnection
+
                     )
                 }
             }
@@ -71,7 +79,20 @@ fun MusicListScreen(
 }
 
 @Composable
-fun MusicListContent(tracks: List<MusicTrack>, onTrackClick: (MusicTrack) -> Unit) {
+fun MusicListContent(
+    tracks: List<MusicTrack>,
+    onTrackClick: (MusicTrack) -> Unit,
+    viewModel: MusicListViewModel = hiltViewModel(),
+    playlistViewModel: PlaylistViewModel = hiltViewModel(),
+    musicServiceConnection: MusicServiceConnection
+) {
+    var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
+    var isSheetOpen by remember { mutableStateOf(false) }
+    var currentPlaylistId = viewModel.playlistId.collectAsState().value
+    var showPlaylistModal by remember { mutableStateOf(false) }
+    val allPlaylists = playlistViewModel.uiState.collectAsState().value.playlists
+
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -95,9 +116,50 @@ fun MusicListContent(tracks: List<MusicTrack>, onTrackClick: (MusicTrack) -> Uni
                 track = track,
                 onClick = { onTrackClick(track) },
                 showMenu = true,
-                onMenuClick = { Log.d("MusicListScreen", "Menu click for ${track.title}") }
+                onMenuClick = {
+                    selectedTrack = track
+                    isSheetOpen = true
+                }
             )
         }
+    }
+    if (isSheetOpen) {
+        TrackOptionsModal(
+            track = selectedTrack!!,
+            onDismiss = { isSheetOpen = false },
+            onAddToFavorites = {
+                Log.d("MusicListScreen", "Añadir a favoritos: ${selectedTrack!!.title}")
+                viewModel.toggleFavorite(selectedTrack?.id ?: "")
+                isSheetOpen = false
+            },
+            onAddToPlaylist = {
+                Log.d("MusicListScreen", "Añadir a playlist: ${selectedTrack!!.title}")
+                showPlaylistModal = true
+            },
+
+            onRemoveFromPlaylist = {
+                Log.d("MusicListScreen", "Eliminar de playlist: ${selectedTrack!!.title}")
+                playlistViewModel.removeTrackFromPlaylist( currentPlaylistId ?: -1, selectedTrack!!.id)
+                isSheetOpen = false
+                },
+            onPlayNext = {
+                Log.d("MusicListScreen", "Reproducir siguiente: ${selectedTrack!!.title}")
+                musicServiceConnection.queueNext(selectedTrack!!.id)
+                isSheetOpen = false
+            }
+        )
+        if (showPlaylistModal && selectedTrack != null) {
+            Log.d("MusicListScreen", "Playlist modal: ${selectedTrack!!.title}")
+            PlaylistSelectionModal(
+                playlists = allPlaylists.map { it.playlistId to it.name },
+                onDismiss = { showPlaylistModal = false },
+                onPlaylistSelected = { playlistId ->
+                    playlistViewModel.addTrackToPlaylist(playlistId, selectedTrack!!)
+                    showPlaylistModal = false
+                }
+            )
+        }
+
     }
 }
 
@@ -114,6 +176,11 @@ fun MusicListScreenPreview() {
         MusicTrack("7", "Venom", "Eminem", "Venom", 275000, "")
     )
     MaterialTheme(colorScheme = DarkColorScheme) {
-        MusicListContent(tracks = dummyTracks, onTrackClick = {})
+        MusicListContent(
+            tracks = dummyTracks, onTrackClick = {},
+            viewModel = TODO(),
+            playlistViewModel = TODO(),
+            musicServiceConnection = TODO()
+        )
     }
 }

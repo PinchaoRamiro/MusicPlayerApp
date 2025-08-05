@@ -29,9 +29,10 @@ class MusicListViewModel @Inject constructor(
     val uiState: StateFlow<MusicListUiState> = _uiState.asStateFlow()
 
     val currentTrack: StateFlow<MusicTrack?> = musicServiceConnection.currentTrack
-    val currentPosition: StateFlow<Long> = musicServiceConnection.currentPosition
     val isPlaying: StateFlow<Boolean> = musicServiceConnection.isPlaying
     val isShuffleModeEnabled: StateFlow<Boolean> = musicServiceConnection.isShuffleEnabled
+
+    val playlistId : StateFlow<Long?> = musicServiceConnection.playlistidRec
 
     private val _favoriteTracks = MutableStateFlow<List<Long>>(emptyList())
     val favoriteTracks: StateFlow<List<Long>> = _favoriteTracks.asStateFlow()
@@ -47,17 +48,37 @@ class MusicListViewModel @Inject constructor(
     fun previousTrack() = musicServiceConnection.previous()
     fun toggleShuffle() = musicServiceConnection.toggleShuffle()
 
-    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int) {
-        musicServiceConnection.setPlaylist(tracks, startIndex)
+    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
+        musicServiceConnection.setPlaylist(tracks, startIndex, playlistId)
     }
 
     fun toggleFavorite(trackId: String) {
+        if (trackId.isEmpty()) return
+        if (favoriteTracks.value.contains(trackId.toLong())) {
+            removeFavorite(trackId)
+        } else {
+            addFavorite(trackId)
+        }
         viewModelScope.launch {
             if (favoriteUseCases.isFavorite(trackId)) {
                 favoriteUseCases.removeFavorite(trackId)
             } else {
                 favoriteUseCases.addFavorite(trackId)
             }
+            refreshFavorites()
+        }
+    }
+
+    private fun addFavorite(trackId: String) {
+        viewModelScope.launch {
+            favoriteUseCases.addFavorite(trackId)
+            refreshFavorites()
+        }
+    }
+
+    private fun removeFavorite(trackId: String) {
+        viewModelScope.launch {
+            favoriteUseCases.removeFavorite(trackId)
             refreshFavorites()
         }
     }
@@ -77,7 +98,7 @@ class MusicListViewModel @Inject constructor(
             try {
                 val tracks = scanMusicUseCase()
                 if (tracks.isNotEmpty()) {
-                    musicServiceConnection.setPlaylist(tracks, startIndex = 0)
+                    musicServiceConnection.setPlaylist(tracks, startIndex = 0, playlistId = -1)
                 }
                 _uiState.value = MusicListUiState(isLoading = false, tracks = tracks)
             } catch (e: Exception) {

@@ -106,7 +106,7 @@ fun PlaylistDetailScreen(
                             MusicListItem(
                                 track = track,
                                 onClick = {
-                                    musicListViewModel.setPlaylist(tracksState, tracksState.indexOf(track))
+                                    musicListViewModel.setPlaylist(tracksState, tracksState.indexOf(track), playlistId)
                                     musicListViewModel.playTrack(track)
                                 },
                                 showMenu = true,
