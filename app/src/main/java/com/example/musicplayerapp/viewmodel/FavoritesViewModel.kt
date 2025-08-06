@@ -82,5 +82,9 @@ class FavoritesViewModel @Inject constructor(
             data = data
         )
     }
+
+    fun isFavorite(trackId: String): Boolean {
+        return uiState.value.favorites.any { it.id == trackId }
+    }
 }
 

@@ -1,6 +1,8 @@
 package com.example.musicplayerapp.viewmodel
 
 import android.app.Application
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.model.MusicTrack
@@ -45,6 +47,7 @@ class MusicListViewModel @Inject constructor(
     fun pauseTrack() = musicServiceConnection.pause()
     fun nextTrack() = musicServiceConnection.next()
     fun previousTrack() = musicServiceConnection.previous()
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     fun toggleShuffle() = musicServiceConnection.toggleShuffle()
 
     fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {

@@ -1,5 +1,7 @@
 package com.example.musicplayerapp.ui.nav
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -43,6 +45,7 @@ object MusicNavDestinations {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MusicNavigationScreen(
@@ -142,30 +145,9 @@ fun MusicNavigationScreen(
                     ) {
                         SongInfoScreen(
                             track = musicListViewModel.currentTrack.collectAsState().value,
-                            isPlaying = musicListViewModel.isPlaying.collectAsState().value,
-                            currentPosition = musicListViewModel.currentPosition.collectAsState().value,
-                            isFavorite = favoritesViewModel.uiState.collectAsState().value.favorites.any {
-                                it.id == (musicListViewModel.currentTrack.value?.id ?: "")
-                            },
-                            onPlayPause = {
-                                if (musicListViewModel.isPlaying.value) {
-                                    musicListViewModel.pauseTrack()
-                                } else {
-                                    musicListViewModel.playTrack(
-                                        musicListViewModel.currentTrack.value
-                                            ?: return@SongInfoScreen
-                                    )
-                                    musicListViewModel.musicServiceConnection.seekTo(
-                                        musicListViewModel.currentPosition.value
-                                    )
-                                }
-                            },
-                            onNext = { musicListViewModel.nextTrack() },
-                            onPrevious = { musicListViewModel.previousTrack() },
-                            onToggleFavorite = {
-                                favoritesViewModel.toggleFavorite(musicListViewModel.currentTrack.value?.id ?: "")
-                            },
-                            onSeek = { pos -> musicListViewModel.musicServiceConnection.seekTo(pos) }
+                            musicListViewModel = musicListViewModel,
+                            playlistViewModel = playlistViewModel,
+                            favoritesViewModel = favoritesViewModel
                         )
                     }
                     composable(

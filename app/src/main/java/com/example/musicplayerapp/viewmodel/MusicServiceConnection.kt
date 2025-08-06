@@ -146,7 +146,7 @@ class MusicServiceConnection @Inject constructor(
         val index = allTracks.indexOfFirst { it.id == track.id }
 
         if (index != -1) {
-            controller?.seekTo(index, 0L)
+            controller?.seekTo(index, 0)
             controller?.play()
         } else {
             controller?.setMediaItem(track.toMediaItem())
@@ -158,6 +158,7 @@ class MusicServiceConnection @Inject constructor(
     fun pause() = controller?.pause()
 
     fun next() {
+
         if (isUsingCustomShuffle) {
             shuffleIndex++
             if (shuffleIndex >= shuffledTracks.size) shuffleIndex = 0

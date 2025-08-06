@@ -31,7 +31,7 @@ fun TrackOptionsModal(
     onDismiss: () -> Unit,
     onAddToFavorites: () -> Unit,
     onAddToPlaylist: () -> Unit,
-    onRemoveFromPlaylist: () -> Unit,
+    onRemoveFromPlaylist: (() -> Unit)? = null,
     onPlayNext: () -> Unit
 ) {
     ModalBottomSheet(
@@ -46,6 +46,10 @@ fun TrackOptionsModal(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
+            SheetOptionItem( text = "Reproducir como siguiente") {
+                onPlayNext()
+                onDismiss()
+            }
 
             SheetOptionItem(
                 text = "Añadir a favoritos",
@@ -56,13 +60,11 @@ fun TrackOptionsModal(
             SheetOptionItem( text = "Añadir a playlist") {
                 onAddToPlaylist()
             }
-            SheetOptionItem( text = "Eliminar de la playlist") {
-                onRemoveFromPlaylist()
-                onDismiss()
-            }
-            SheetOptionItem( text = "Reproducir como siguiente") {
-                onPlayNext()
-                onDismiss()
+            if(onRemoveFromPlaylist != null) {
+                SheetOptionItem(text = "Eliminar de la playlist") {
+                    onRemoveFromPlaylist()
+                    onDismiss()
+                }
             }
         }
     }

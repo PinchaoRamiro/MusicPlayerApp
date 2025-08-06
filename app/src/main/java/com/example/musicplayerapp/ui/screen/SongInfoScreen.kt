@@ -1,5 +1,8 @@
 package com.example.musicplayerapp.ui.screen
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,32 +11,43 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.musicplayerapp.R
 import com.example.musicplayerapp.data.model.MusicTrack
+import com.example.musicplayerapp.ui.components.PlaylistSelectionModal
 import com.example.musicplayerapp.utils.extractAlbumArt
+import com.example.musicplayerapp.viewmodel.FavoritesViewModel
+import com.example.musicplayerapp.viewmodel.MusicListViewModel
+import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 
+@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 @Composable
 fun SongInfoScreen(
     track: MusicTrack?,
-    isPlaying: Boolean,
-    currentPosition: Long,
-    onPlayPause: () -> Unit,
-    onNext: () -> Unit,
-    onPrevious: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    isFavorite: Boolean,
-    onSeek: (Long) -> Unit,
+    playlistViewModel: PlaylistViewModel = hiltViewModel(),
+    musicListViewModel: MusicListViewModel = hiltViewModel(),
+    favoritesViewModel: FavoritesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
+    val isFavorite = favoritesViewModel.isFavorite(track?.id ?: "")
+    val isPlaying = musicListViewModel.isPlaying.collectAsState().value
+    val currentPosition = musicListViewModel.currentPosition.collectAsState().value
+
+    var showPlaylistModal by remember { mutableStateOf(false) }
+    val allPlaylists = playlistViewModel.uiState.collectAsState().value.playlists
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -80,21 +94,21 @@ fun SongInfoScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(onClick = onToggleFavorite) {
+            IconButton(onClick = { favoritesViewModel.toggleFavorite(track.id)} ) {
                 Icon(
-                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    imageVector = if (favoritesViewModel.isFavorite(track.id)) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Favorite",
-                    tint = if (isFavorite) Color.Red else Color.White
+                    tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                 )
             }
-            IconButton(onClick = { /* TODO: Agregar a playlist */ }) {
-                Icon(Icons.Default.AddCircle, contentDescription = "Add to Playlist", tint = Color.White)
+            IconButton(onClick = { showPlaylistModal = true }) {
+                Icon(Icons.Default.AddCircle, contentDescription = "Add to Playlist", tint = MaterialTheme.colorScheme.onSurface)
             }
-            IconButton(onClick = { /* TODO: Temporizador */ }) {
-                Icon(Icons.Default.Settings, contentDescription = "Timer", tint = Color.White)
+            IconButton(onClick = { /* TODO: Settings */ }) {
+                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
             }
-            IconButton(onClick = { /* TODO: Volumen */ }) {
-                Icon(Icons.Default.Share, contentDescription = "Volume", tint = Color.White)
+            IconButton(onClick = { /* TODO: Share */ }) {
+                Icon(Icons.Default.Share, contentDescription = "share", tint = MaterialTheme.colorScheme.onSurface)
             }
         }
 
@@ -105,7 +119,7 @@ fun SongInfoScreen(
             Slider(
                 enabled = track.data.isNotEmpty(),
                 value = currentPosition.coerceIn(0L, track.duration).toFloat(),
-                onValueChange = { onSeek(it.toLong()) },
+                onValueChange = { musicListViewModel.musicServiceConnection.seekTo(it.toLong()) },
                 valueRange = 0f..track.duration.toFloat(),
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
@@ -133,14 +147,25 @@ fun SongInfoScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: Shuffle */ }) {
-                Icon(painter = painterResource(id = R.drawable.shuffle_24px), contentDescription = "Shuffle", tint = MaterialTheme.colorScheme.primary)
+            IconButton(onClick = { musicListViewModel.toggleShuffle()}) {
+                Icon(
+                    painter = painterResource(id = R.drawable.shuffle_24px),
+                    contentDescription = "Shuffle",
+                    tint = if (musicListViewModel.isShuffleModeEnabled.collectAsState().value) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
             }
-            IconButton(onClick = onPrevious) {
+            IconButton(onClick = {musicListViewModel.previousTrack()}) {
                 Icon(painter = painterResource(id = R.drawable.skip_previous), contentDescription = "Previous", tint = MaterialTheme.colorScheme.onSurface)
             }
             IconButton(
-                onClick = onPlayPause,
+                onClick = {
+                    if (isPlaying) {
+                        musicListViewModel.pauseTrack()
+                    } else {
+                        musicListViewModel.playTrack(track)
+                        musicListViewModel.musicServiceConnection.seekTo(musicListViewModel.currentPosition.value)
+                    }
+                },
                 modifier = Modifier
                     .size(64.dp)
                     .background(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
@@ -152,13 +177,26 @@ fun SongInfoScreen(
                     modifier = Modifier.size(32.dp)
                 )
             }
-            IconButton(onClick = onNext) {
+            IconButton(onClick = {musicListViewModel.nextTrack()}) {
                 Icon(painter = painterResource(id = R.drawable.skip_next), contentDescription = "Next", tint = MaterialTheme.colorScheme.onSurface)
             }
             IconButton(onClick = { /* TODO: Cola */ }) {
                 Icon(painter = painterResource(id = R.drawable.queue_music), contentDescription = "Queue", tint = MaterialTheme.colorScheme.onSurface)
             }
         }
+
+        if (showPlaylistModal) {
+            Log.d("MusicListScreen", "Playlist modal: ${track.title}")
+            PlaylistSelectionModal(
+                playlists = allPlaylists.map { it.playlistId to it.name },
+                onDismiss = { showPlaylistModal = false },
+                onPlaylistSelected = { playlistId ->
+                    playlistViewModel.addTrackToPlaylist(playlistId, track)
+                    showPlaylistModal = false
+                }
+            )
+        }
+
     }
 }
 
