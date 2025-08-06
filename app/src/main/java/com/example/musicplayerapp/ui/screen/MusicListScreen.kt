@@ -37,9 +37,6 @@ fun MusicListScreen(
     viewModel: MusicListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val isPlaying by viewModel.isPlaying.collectAsState()
-    val currentTrack by viewModel.currentTrack.collectAsState()
-    val isShuffleEnabled by viewModel.isShuffleModeEnabled.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Column(
@@ -53,7 +50,8 @@ fun MusicListScreen(
                 uiState.error != null -> ErrorContent(uiState.error!!)
                 else -> MusicListContent(
                     tracks = uiState.tracks,
-                    onTrackClick = { track ->
+                    onTrackClick = {  track ->
+                        viewModel.setPlaylist(uiState.tracks, uiState.tracks.indexOf(track), -1)
                         viewModel.playTrack(track)
                     },
                     musicServiceConnection = viewModel.musicServiceConnection

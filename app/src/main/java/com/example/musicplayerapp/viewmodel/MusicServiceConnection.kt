@@ -2,29 +2,23 @@ package com.example.musicplayerapp.viewmodel
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.musicplayerapp.data.model.MusicTrack
+import com.example.musicplayerapp.player.service.PlaybackService
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.net.toUri
-import androidx.media3.common.MediaMetadata
-import com.example.musicplayerapp.player.service.PlaybackService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 @Singleton
 class MusicServiceConnection @Inject constructor(
@@ -40,9 +34,6 @@ class MusicServiceConnection @Inject constructor(
     private val _currentDuration = MutableStateFlow(0L)
     val currentDuration: StateFlow<Long> = _currentDuration.asStateFlow()
 
-    private var allTracks = mutableListOf<MusicTrack>()
-    var playlistRec = MutableStateFlow<Long?>(null)
-
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
@@ -50,8 +41,15 @@ class MusicServiceConnection @Inject constructor(
     val isShuffleEnabled: StateFlow<Boolean> = _isShuffleEnabled.asStateFlow()
 
     private var controller: MediaController? = null
-
     private var progressJob: Job? = null
+
+    private var allTracks = mutableListOf<MusicTrack>()
+    private var shuffledTracks = mutableListOf<MusicTrack>()
+    private var shuffleIndex = 0
+    private var isUsingCustomShuffle = false
+
+    // id de la playlist
+    var playlistRec = MutableStateFlow<Long?>(null)
 
     private fun startProgressUpdates() {
         progressJob?.cancel()
@@ -60,14 +58,10 @@ class MusicServiceConnection @Inject constructor(
                 controller?.let { ctrl ->
                     if (ctrl.isPlaying) {
                         _currentPosition.update { ctrl.currentPosition }
-                        _currentDuration.update {
-                            ctrl.duration.coerceAtLeast(1L)
-
-                        }
-                        Log.d("MusicServiceConnection", "Duration: ${ctrl.duration}")
+                        _currentDuration.update { ctrl.duration.coerceAtLeast(1L) }
                     }
                 }
-                delay(500) // Actualiza cada medio segundo
+                delay(500)
             }
         }
     }
@@ -81,28 +75,156 @@ class MusicServiceConnection @Inject constructor(
         val mediaItem = track.toMediaItem()
 
         val currentIndex = controller?.currentMediaItemIndex ?: return
-        val isShuffle = controller?.shuffleModeEnabled ?: false
 
-        if (isShuffle) {
-            // Si hay shuffle, se fuerza el modo ordenado temporalmente
-            controller?.shuffleModeEnabled = false
-        }
-
-        // Insertar el track justo después del actual
-        val insertIndex = currentIndex + 1
-        controller?.addMediaItem(insertIndex, mediaItem)
-
-        // También actualizamos la lista local para mantenerla sincronizada
-        allTracks.add(insertIndex, track)
-
-        if (isShuffle) {
-            // Restaurar el modo shuffle
-            controller?.shuffleModeEnabled = true
+        if (isUsingCustomShuffle) {
+            val insertIndex = (shuffleIndex + 1).coerceAtMost(shuffledTracks.size)
+            if (!shuffledTracks.any { it.id == track.id }) {
+                shuffledTracks.add(insertIndex, track)
+            }
+            if (!allTracks.any { it.id == track.id }) {
+                allTracks.add(track)
+            }
+        } else {
+            controller?.addMediaItem(currentIndex + 1, mediaItem)
+            allTracks.add(currentIndex + 1, track)
         }
     }
 
+    fun connect() {
+        val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+        val futureController = MediaController.Builder(context, sessionToken).buildAsync()
 
-    fun getController(): MediaController? = controller
+        futureController.addListener({
+            try {
+                controller = futureController.get()
+                startProgressUpdates()
+
+                controller?.addListener(object : Player.Listener {
+
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        _currentTrack.value = mediaItem?.let {
+                            MusicTrack(
+                                id = it.mediaId,
+                                title = it.mediaMetadata.title.toString(),
+                                artist = it.mediaMetadata.artist.toString(),
+                                album = it.mediaMetadata.albumTitle.toString(),
+                                duration = it.mediaMetadata.extras?.getLong("duration") ?: 0L,
+                                data = it.localConfiguration?.uri.toString()
+                            )
+                        }
+                        _currentPosition.value = controller?.currentPosition ?: 0L
+                        _currentDuration.value = controller?.duration ?: 0L
+                    }
+
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        _isPlaying.value = isPlaying
+                    }
+
+                    override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                        _isShuffleEnabled.value = shuffleModeEnabled
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_ENDED) {
+                            handleTrackEnd()
+                        }
+                    }
+                })
+            } catch (e: Exception) {
+                Log.e("MusicServiceConnection", "Failed to connect to media controller", e)
+            }
+        }, Runnable::run)
+    }
+
+    fun disconnect() {
+        progressJob?.cancel()
+        controller?.release()
+        controller = null
+    }
+
+    fun play(track: MusicTrack) {
+        val index = allTracks.indexOfFirst { it.id == track.id }
+
+        if (index != -1) {
+            controller?.seekTo(index, 0L)
+            controller?.play()
+        } else {
+            controller?.setMediaItem(track.toMediaItem())
+            controller?.prepare()
+            controller?.play()
+        }
+    }
+
+    fun pause() = controller?.pause()
+
+    fun next() {
+        if (isUsingCustomShuffle) {
+            shuffleIndex++
+            if (shuffleIndex >= shuffledTracks.size) shuffleIndex = 0
+            play(shuffledTracks[shuffleIndex])
+        } else {
+            if( allTracks.indexOf(_currentTrack.value) >= allTracks.size -1){
+                controller?.seekTo(0, 0L)
+            }
+            else controller?.seekToNext()
+        }
+    }
+
+    fun previous() {
+        if (isUsingCustomShuffle) {
+            shuffleIndex--
+            if (shuffleIndex < 0) shuffleIndex = shuffledTracks.size - 1
+            play(shuffledTracks[shuffleIndex])
+        } else {
+            if( allTracks.indexOf(_currentTrack.value) == 0){
+                controller?.seekTo(allTracks.size -1 , 0L)
+            }
+            else controller?.seekToPrevious()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun toggleShuffle() {
+        isUsingCustomShuffle = !isUsingCustomShuffle
+        _isShuffleEnabled.value = isUsingCustomShuffle
+
+        if (isUsingCustomShuffle) {
+            shuffledTracks = allTracks.shuffled().toMutableList()
+            shuffledTracks.addFirst(_currentTrack.value!!)
+        }
+    }
+
+    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
+        if (allTracks == tracks) return
+
+        playlistRec.value = playlistId
+        allTracks = tracks.toMutableList()
+
+        controller?.setMediaItems(tracks.map { it.toMediaItem() }, startIndex, 0L)
+        controller?.prepare()
+
+        _currentTrack.value = getCurrentMetadata()
+
+        if (isUsingCustomShuffle) {
+            shuffledTracks = tracks.shuffled().toMutableList()
+            shuffleIndex = 0
+        }
+    }
+
+    private fun handleTrackEnd() {
+        if (isUsingCustomShuffle) {
+            shuffleIndex++
+            if (shuffleIndex >= shuffledTracks.size) shuffleIndex = 0
+            play(shuffledTracks[shuffleIndex])
+        } else {
+            val nextIndex = (controller?.currentMediaItemIndex ?: 0) + 1
+            if (nextIndex >= allTracks.size) {
+                play(allTracks[0]) // Repite desde el principio
+            } else {
+                controller?.seekToNext()
+            }
+        }
+    }
 
     fun getCurrentMetadata(): MusicTrack? {
         val item = controller?.currentMediaItem ?: return null
@@ -116,103 +238,6 @@ class MusicServiceConnection @Inject constructor(
         )
     }
 
-    fun connect() {
-        val sessionToken = SessionToken(
-            context,
-            ComponentName(context,PlaybackService::class.java)
-        )
-
-        val futureController = MediaController.Builder(context, sessionToken).buildAsync()
-
-        futureController.addListener({
-            var mediaController : MediaController?
-            try {
-                mediaController = futureController.get()
-                controller = mediaController
-                startProgressUpdates()
-            }
-            catch (e: Exception) {
-                return@addListener
-            }
-
-
-            mediaController.addListener(object : Player.Listener {
-                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                    _currentTrack.value = mediaItem?.let { item ->
-                        MusicTrack(
-                            id = item.mediaId,
-                            title = item.mediaMetadata.title.toString(),
-                            artist = item.mediaMetadata.artist.toString(),
-                            album = item.mediaMetadata.albumTitle.toString(),
-                            duration = item.mediaMetadata.extras?.getLong("duration") ?: 0L,
-                            data = item.localConfiguration?.uri.toString()
-                        )
-                    }
-                    _currentPosition.value = mediaController.currentPosition
-                    _currentDuration.value = mediaController.duration
-                }
-
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    _isPlaying.value = isPlaying
-                }
-
-                override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-                    _isShuffleEnabled.value = shuffleModeEnabled
-                }
-            })
-        }, Runnable::run)
-    }
-
-    fun disconnect() {
-        progressJob?.cancel()
-        controller?.release()
-        controller = null
-    }
-
-    fun play(track: MusicTrack) {
-        // Buscar si la canción ya está en la playlist
-        val index = allTracks.indexOfFirst { it.id == track.id }
-
-        if (index != -1 && controller != null) {
-            // Si existe → saltar a esa posición
-            controller?.seekTo(index, 0L)
-            controller?.play()
-        } else {
-            // Si no existe → reproducir como canción individual
-            controller?.setMediaItem(
-                track.toMediaItem()
-            )
-            controller?.prepare()
-            controller?.play()
-        }
-    }
-
-
-    fun pause() = controller?.pause()
-    fun next() {
-        controller?.seekToNext()
-    }
-    fun previous() = controller?.seekToPrevious()
-
-    fun toggleShuffle() {
-        controller?.shuffleModeEnabled = !_isShuffleEnabled.value
-    }
-
-    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
-        if(allTracks == tracks){
-            return
-        }
-        playlistRec = MutableStateFlow(playlistId)
-
-        val mediaItems = tracks.map { track ->
-            track.toMediaItem()
-        }
-        allTracks = tracks.toMutableList()
-        controller?.setMediaItems(mediaItems, startIndex, 0L)
-        controller?.prepare()
-        _currentTrack.value = getCurrentMetadata()
-    }
-
     private fun MusicTrack.toMediaItem(): MediaItem {
         return MediaItem.Builder()
             .setUri(this.data.toUri())
@@ -222,9 +247,11 @@ class MusicServiceConnection @Inject constructor(
                     .setTitle(this.title)
                     .setArtist(this.artist)
                     .setAlbumTitle(this.album)
-                    /*.setArtworkUri(this.data.toUri())*/
-                    .setExtras(Bundle().apply { putLong("duration", this@toMediaItem.duration) })
+                    .setExtras(Bundle().apply {
+                        putLong("duration", this@toMediaItem.duration)
+                    })
                     .build()
-            ).build()
+            )
+            .build()
     }
 }
