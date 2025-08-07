@@ -18,12 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.musicplayerapp.R
 import com.example.musicplayerapp.data.model.MusicTrack
+import com.example.musicplayerapp.utils.extractAlbumArt
 
 import com.example.musicplayerapp.ui.nav.MusicNavDestinations
 
@@ -63,12 +65,24 @@ fun NowPlayingFooter(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_music_note),
-                    contentDescription = "Current track icon",
-                    tint = MaterialTheme.colorScheme.inversePrimary,
-                    modifier = Modifier.size(48.dp)
-                )
+                val albumArt = extractAlbumArt(currentTrack.data)
+
+                if (albumArt != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = albumArt.asImageBitmap(),
+                        contentDescription = "Album Art",
+                        modifier = Modifier
+                            .size(48.dp)
+                    )
+                }else{
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_music_note),
+                        contentDescription = "Music icon",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(

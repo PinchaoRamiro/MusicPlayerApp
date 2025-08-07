@@ -76,7 +76,6 @@ fun SheetOptionItem( text: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .clip(RoundedCornerShape(16.dp))
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {/*
@@ -87,8 +86,7 @@ fun SheetOptionItem( text: String, onClick: () -> Unit) {
             tint = MaterialTheme.colorScheme.primary
         )*/
         Text(text = text, style = MaterialTheme.typography.bodyLarge , modifier = Modifier
-            .background( MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-            .padding(12.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
         )
     }
 }

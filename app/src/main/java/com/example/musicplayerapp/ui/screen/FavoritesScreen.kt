@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.musicplayerapp.ui.components.MusicListItem
 import com.example.musicplayerapp.viewmodel.FavoritesViewModel
 import com.example.musicplayerapp.viewmodel.MusicServiceConnection
@@ -24,7 +25,12 @@ fun FavoritesScreen(
             Text("No tienes canciones favoritas aún.")
         }
     } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(16.dp)
+        ) {
             Log.d("FavoritesScreen", "Favorite tracks: $favoriteTracks")
             items(favoriteTracks) { track ->
                 MusicListItem(

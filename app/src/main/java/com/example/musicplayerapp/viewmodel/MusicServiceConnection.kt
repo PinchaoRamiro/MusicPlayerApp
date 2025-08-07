@@ -71,23 +71,27 @@ class MusicServiceConnection @Inject constructor(
     }
 
     fun queueNext(trackId: String) {
+
         val track = allTracks.find { it.id == trackId } ?: return
         val mediaItem = track.toMediaItem()
-
         val currentIndex = controller?.currentMediaItemIndex ?: return
 
-        if (isUsingCustomShuffle) {
-            val insertIndex = (shuffleIndex + 1).coerceAtMost(shuffledTracks.size)
-            if (!shuffledTracks.any { it.id == track.id }) {
-                shuffledTracks.add(insertIndex, track)
-            }
-            if (!allTracks.any { it.id == track.id }) {
-                allTracks.add(track)
-            }
-        } else {
-            controller?.addMediaItem(currentIndex + 1, mediaItem)
-            allTracks.add(currentIndex + 1, track)
+        // Verifica si ya está como siguiente
+        val nextItem = controller?.getMediaItemAt(currentIndex + 1)
+        if (nextItem?.mediaId == track.id) {
+            Log.d("MusicServiceConnection", "Track already next in queue.")
+            return
         }
+        // Elimina si ya está en la lista
+        val existingIndex = shuffledTracks.indexOfFirst { it.id == track.id }
+        if (existingIndex != -1) {
+            controller?.removeMediaItem(existingIndex)
+            Log.d("MusicServiceConnection", "Removed track from index $existingIndex")
+        }
+        // Inserta después del actual
+        val insertIndex = currentIndex + 1
+        controller?.addMediaItem(insertIndex, mediaItem)
+        Log.d("MusicServiceConnection", "Inserted track '${track.title}' at index $insertIndex")
     }
 
     fun connect() {
@@ -114,6 +118,9 @@ class MusicServiceConnection @Inject constructor(
                         }
                         _currentPosition.value = controller?.currentPosition ?: 0L
                         _currentDuration.value = controller?.duration ?: 0L
+                        if (isUsingCustomShuffle) {
+                            shuffleIndex = controller?.currentMediaItemIndex ?: 0
+                        }
                     }
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -143,7 +150,12 @@ class MusicServiceConnection @Inject constructor(
     }
 
     fun play(track: MusicTrack) {
-        val index = allTracks.indexOfFirst { it.id == track.id }
+        var index: Int? = null
+        if(isUsingCustomShuffle){
+            index = shuffledTracks.indexOf(track)
+            shuffleIndex = shuffledTracks.indexOf(track)
+        }else
+            index = allTracks.indexOf(track)
 
         if (index != -1) {
             controller?.seekTo(index, 0)
@@ -158,29 +170,28 @@ class MusicServiceConnection @Inject constructor(
     fun pause() = controller?.pause()
 
     fun next() {
-
         if (isUsingCustomShuffle) {
-            shuffleIndex++
-            if (shuffleIndex >= shuffledTracks.size) shuffleIndex = 0
-            play(shuffledTracks[shuffleIndex])
+            controller?.seekToNext()
+            shuffleIndex = controller?.currentMediaItemIndex ?: 0
         } else {
-            if( allTracks.indexOf(_currentTrack.value) >= allTracks.size -1){
+            if (allTracks.indexOf(_currentTrack.value) >= allTracks.size - 1) {
                 controller?.seekTo(0, 0L)
+            } else {
+                controller?.seekToNext()
             }
-            else controller?.seekToNext()
         }
     }
 
     fun previous() {
         if (isUsingCustomShuffle) {
-            shuffleIndex--
-            if (shuffleIndex < 0) shuffleIndex = shuffledTracks.size - 1
-            play(shuffledTracks[shuffleIndex])
+            controller?.seekToPrevious()
+            shuffleIndex = controller?.currentMediaItemIndex ?: 0
         } else {
-            if( allTracks.indexOf(_currentTrack.value) == 0){
-                controller?.seekTo(allTracks.size -1 , 0L)
+            if (allTracks.indexOf(_currentTrack.value) == 0) {
+                controller?.seekTo(allTracks.size - 1, 0L)
+            } else {
+                controller?.seekToPrevious()
             }
-            else controller?.seekToPrevious()
         }
     }
 
@@ -192,10 +203,10 @@ class MusicServiceConnection @Inject constructor(
         if (isUsingCustomShuffle) {
             shuffledTracks = allTracks.shuffled().toMutableList()
             shuffledTracks.addFirst(_currentTrack.value!!)
-            shuffleIndex = 0
-            controller?.setMediaItems(shuffledTracks.map { it.toMediaItem() }, 0, _currentPosition.value)
+            shuffleIndex = shuffledTracks.indexOf(_currentTrack.value) + 1
+            controller?.setMediaItems(shuffledTracks.map { it.toMediaItem() }, shuffleIndex - 1, _currentPosition.value)
         }else{
-            controller?.setMediaItems(allTracks.map { it.toMediaItem() }, 0, _currentPosition.value)
+            controller?.setMediaItems(allTracks.map { it.toMediaItem() }, allTracks.indexOf(_currentTrack.value), _currentPosition.value)
         }
     }
 
@@ -224,7 +235,7 @@ class MusicServiceConnection @Inject constructor(
         } else {
             val nextIndex = (controller?.currentMediaItemIndex ?: 0) + 1
             if (nextIndex >= allTracks.size) {
-                play(allTracks[0]) // Repite desde el principio
+                play(allTracks[0])
             } else {
                 controller?.seekToNext()
             }
