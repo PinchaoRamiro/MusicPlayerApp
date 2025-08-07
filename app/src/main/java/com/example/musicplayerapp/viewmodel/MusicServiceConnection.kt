@@ -192,6 +192,10 @@ class MusicServiceConnection @Inject constructor(
         if (isUsingCustomShuffle) {
             shuffledTracks = allTracks.shuffled().toMutableList()
             shuffledTracks.addFirst(_currentTrack.value!!)
+            shuffleIndex = 0
+            controller?.setMediaItems(shuffledTracks.map { it.toMediaItem() }, 0, _currentPosition.value)
+        }else{
+            controller?.setMediaItems(allTracks.map { it.toMediaItem() }, 0, _currentPosition.value)
         }
     }
 

@@ -120,30 +120,4 @@ class PlaybackService : MediaLibraryService() {
 
         }
     }
-
-    /** ------------ Funciones públicas para ViewModel ------------ **/
-
-    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int = 0, shuffle: Boolean = false) {
-        allTracks.clear()
-        allTracks.addAll(tracks)
-
-        val mediaItems = tracks.map { track ->
-            MediaItem.Builder()
-                .setMediaId(track.data)
-                .setUri(track.data)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(track.title)
-                        .setArtist(track.artist)
-                        .setAlbumTitle(track.album)
-                        .build()
-                )
-                .build()
-        }
-
-        player.setMediaItems(mediaItems, startIndex, 0L)
-        player.shuffleModeEnabled = shuffle
-        player.prepare()
-        player.play()
-    }
 }

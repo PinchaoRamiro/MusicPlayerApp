@@ -56,6 +56,11 @@ room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
+# Paging (to pagination)
+paging-runtime = { module = "androidx.paging:paging-runtime", version = "3.3.6" }
+paging-compose = { module = "androidx.paging:paging-compose", version = "3.3.6" }
+
+
 # Hilt
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
