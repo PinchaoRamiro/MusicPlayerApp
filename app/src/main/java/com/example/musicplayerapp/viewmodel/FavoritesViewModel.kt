@@ -1,6 +1,7 @@
 package com.example.musicplayerapp.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.database.entities.MusicTrackEntity
@@ -8,6 +9,7 @@ import com.example.musicplayerapp.data.model.MusicTrack
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.musicplayerapp.domain.usecase.FavoriteUseCases
+import com.example.musicplayerapp.domain.usecase.PlayerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -23,12 +25,14 @@ data class FavoritesUiState(
 class FavoritesViewModel @Inject constructor(
     application: Application,
     private val favoriteUseCases: FavoriteUseCases,
+    private val playerUseCase: PlayerUseCase
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(FavoritesUiState())
     val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
 
     init {
+        Log.d("FavoritesViewModel", "init")
         refreshFavorites()
     }
 
@@ -86,5 +90,11 @@ class FavoritesViewModel @Inject constructor(
     fun isFavorite(trackId: String): Boolean {
         return uiState.value.favorites.any { it.id == trackId }
     }
+
+    fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
+        playerUseCase.setPlaylist(tracks, startIndex, playlistId)
+    }
+
+    fun playTrack(track: MusicTrack) = playerUseCase.play(track)
 }
 

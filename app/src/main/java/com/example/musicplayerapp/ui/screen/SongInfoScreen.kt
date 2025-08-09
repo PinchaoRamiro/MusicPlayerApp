@@ -24,9 +24,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.musicplayerapp.R
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.PlaylistSelectionModal
+import com.example.musicplayerapp.ui.nav.MusicNavDestinations
 import com.example.musicplayerapp.utils.extractAlbumArt
 import com.example.musicplayerapp.viewmodel.FavoritesViewModel
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
@@ -36,6 +38,7 @@ import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 @Composable
 fun SongInfoScreen(
     track: MusicTrack?,
+    navController: NavController,
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
     musicListViewModel: MusicListViewModel = hiltViewModel(),
     favoritesViewModel: FavoritesViewModel = hiltViewModel(),
@@ -119,7 +122,7 @@ fun SongInfoScreen(
             Slider(
                 enabled = track.data.isNotEmpty(),
                 value = currentPosition.coerceIn(0L, track.duration).toFloat(),
-                onValueChange = { musicListViewModel.musicServiceConnection.seekTo(it.toLong()) },
+                onValueChange = { musicListViewModel.seekTo(it.toLong()) },
                 valueRange = 0f..track.duration.toFloat(),
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
@@ -163,7 +166,7 @@ fun SongInfoScreen(
                         musicListViewModel.pauseTrack()
                     } else {
                         musicListViewModel.playTrack(track)
-                        musicListViewModel.musicServiceConnection.seekTo(musicListViewModel.currentPosition.value)
+                        musicListViewModel.seekTo(musicListViewModel.currentPosition.value)
                     }
                 },
                 modifier = Modifier
@@ -180,7 +183,9 @@ fun SongInfoScreen(
             IconButton(onClick = {musicListViewModel.nextTrack()}) {
                 Icon(painter = painterResource(id = R.drawable.skip_next), contentDescription = "Next", tint = MaterialTheme.colorScheme.onSurface)
             }
-            IconButton(onClick = { /* TODO: Cola */ }) {
+            IconButton(onClick = {
+                navController.navigate(MusicNavDestinations.QUEUE_ROUTE)
+            }) {
                 Icon(painter = painterResource(id = R.drawable.queue_music), contentDescription = "Queue", tint = MaterialTheme.colorScheme.onSurface)
             }
         }
@@ -188,7 +193,7 @@ fun SongInfoScreen(
         if (showPlaylistModal) {
             Log.d("MusicListScreen", "Playlist modal: ${track.title}")
             PlaylistSelectionModal(
-                playlists = allPlaylists.map { it.playlistId to it.name },
+                playlists = allPlaylists,
                 onDismiss = { showPlaylistModal = false },
                 onPlaylistSelected = { playlistId ->
                     playlistViewModel.addTrackToPlaylist(playlistId, track)

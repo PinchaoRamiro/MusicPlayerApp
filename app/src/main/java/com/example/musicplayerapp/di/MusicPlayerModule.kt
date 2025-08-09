@@ -3,7 +3,7 @@ package com.example.musicplayerapp.di
 import android.content.Context
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.example.musicplayerapp.viewmodel.MusicServiceConnection
+import com.example.musicplayerapp.player.service.MusicServiceConnection
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,14 +22,4 @@ object MusicPlayerModule {
     ): MusicServiceConnection {
         return MusicServiceConnection(context)
     }
-
-/*
-    @Provides
-    @Singleton
-    fun provideExoPlayer(context: Context): ExoPlayer {
-        return ExoPlayer.Builder(context).build().apply {
-            playWhenReady = true
-            repeatMode = Player.REPEAT_MODE_OFF
-        }
-    }*/
 }

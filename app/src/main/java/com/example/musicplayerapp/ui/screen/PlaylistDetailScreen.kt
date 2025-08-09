@@ -30,14 +30,12 @@ import androidx.navigation.NavController
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.ui.components.LoadingContent
 import com.example.musicplayerapp.ui.components.MusicListItem
-import com.example.musicplayerapp.ui.components.NowPlayingFooter
 import com.example.musicplayerapp.ui.components.PlaylistSelectionModal
 import com.example.musicplayerapp.ui.components.TrackOptionsModal
 import com.example.musicplayerapp.ui.nav.MusicNavDestinations
 import com.example.musicplayerapp.ui.theme.DarkColorScheme
 import com.example.musicplayerapp.viewmodel.FavoritesViewModel
 import com.example.musicplayerapp.viewmodel.MusicListViewModel
-import com.example.musicplayerapp.viewmodel.MusicServiceConnection
 import com.example.musicplayerapp.viewmodel.PlaylistViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,8 +45,7 @@ fun PlaylistDetailScreen(
     navController: NavController,
     musicListViewModel: MusicListViewModel,
     playlistViewModel: PlaylistViewModel = hiltViewModel(),
-    favoritesViewModel: FavoritesViewModel = hiltViewModel(),
-    musicServiceConnection: MusicServiceConnection,
+    favoritesViewModel: FavoritesViewModel = hiltViewModel()
 ) {
     val tracksState by playlistViewModel.getPlaylistTracks(playlistId).collectAsState()
     val currentTrack by musicListViewModel.currentTrack.collectAsState()
@@ -137,14 +134,14 @@ fun PlaylistDetailScreen(
             },
             onPlayNext = {
                 Log.d("MusicListScreen", "Reproducir siguiente: ${selectedTrack!!.title}")
-                musicServiceConnection.queueNext(selectedTrack!!.id)
+                playlistViewModel.queueNext(selectedTrack!!.id)
                 showMenuModal = false
             }
         )
         if (showPlaylistModal && selectedTrack != null) {
             Log.d("MusicListScreen", "Playlist modal: ${selectedTrack!!.title}")
             PlaylistSelectionModal(
-                playlists = allPlaylists.map { it.playlistId to it.name },
+                playlists = allPlaylists,
                 onDismiss = { showPlaylistModal = false },
                 onPlaylistSelected = { playlistId ->
                     playlistViewModel.addTrackToPlaylist(playlistId, selectedTrack!!)

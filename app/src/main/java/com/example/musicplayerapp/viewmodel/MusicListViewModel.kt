@@ -1,79 +1,75 @@
 package com.example.musicplayerapp.viewmodel
 
-import android.app.Application
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.model.MusicTrack
+import com.example.musicplayerapp.domain.usecase.PlayerUseCase
 import com.example.musicplayerapp.domain.usecase.ScanMusicUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class MusicListUiState(
-    val isLoading: Boolean = true,
-    val tracks: List<MusicTrack> = emptyList(),
-    val error: String? = null
-)
+sealed class MusicListUiState {
+    object Loading : MusicListUiState()
+    data class Success(val tracks: List<MusicTrack>) : MusicListUiState()
+    data class Error(val message: String) : MusicListUiState()
+}
 
 @HiltViewModel
 class MusicListViewModel @Inject constructor(
-    application: Application,
     private val scanMusicUseCase: ScanMusicUseCase,
-    internal val musicServiceConnection: MusicServiceConnection
-) : AndroidViewModel(application) {
+    private val playerUseCase: PlayerUseCase
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(MusicListUiState())
+    private val _uiState = MutableStateFlow<MusicListUiState>(MusicListUiState.Loading)
     val uiState: StateFlow<MusicListUiState> = _uiState.asStateFlow()
 
-    val currentTrack: StateFlow<MusicTrack?> = musicServiceConnection.currentTrack
-    val currentPosition: StateFlow<Long> = musicServiceConnection.currentPosition
-    val currentDuration: StateFlow<Long> = musicServiceConnection.currentDuration
-    val isPlaying: StateFlow<Boolean> = musicServiceConnection.isPlaying
-    val isShuffleModeEnabled: StateFlow<Boolean> = musicServiceConnection.isShuffleEnabled
-
-    val playlistId : StateFlow<Long?> = musicServiceConnection.playlistRec
-
-    private val _favoriteTracks = MutableStateFlow<List<Long>>(emptyList())
-    val favoriteTracks: StateFlow<List<Long>> = _favoriteTracks.asStateFlow()
+    // 🎵 Flows del reproductor con valores iniciales para evitar nulls
+    val currentTrack = playerUseCase.currentTrack.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    val currentPosition = playerUseCase.currentPosition.stateIn(viewModelScope, SharingStarted.Lazily, 0L)
+    val isPlaying = playerUseCase.isPlaying.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val isShuffleModeEnabled = playerUseCase.isShuffleModeEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val playlistId = playerUseCase.playlistId.stateIn(viewModelScope, SharingStarted.Lazily, -1L)
 
     init {
-        musicServiceConnection.connect()
+        playerUseCase.connect()
     }
 
-    fun playTrack(track: MusicTrack) = musicServiceConnection.play(track)
-    fun pauseTrack() = musicServiceConnection.pause()
-    fun nextTrack() = musicServiceConnection.next()
-    fun previousTrack() = musicServiceConnection.previous()
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
-    fun toggleShuffle() = musicServiceConnection.toggleShuffle()
+    fun playTrack(track: MusicTrack) = playerUseCase.play(track)
+    fun pauseTrack() = playerUseCase.pause()
+    fun nextTrack() = playerUseCase.next()
+    fun previousTrack() = playerUseCase.previous()
+    fun toggleShuffle() = playerUseCase.toggleShuffle()
+    fun seekTo(position: Long) = playerUseCase.seekTo(position)
+    fun queueNext(trackId: String) = playerUseCase.queueNext(trackId)
 
     fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int, playlistId: Long) {
-        musicServiceConnection.setPlaylist(tracks, startIndex, playlistId)
+        playerUseCase.setPlaylist(tracks, startIndex, playlistId)
     }
 
     fun loadMusic() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                val tracks = scanMusicUseCase()
-                if (tracks.isNotEmpty()) {
-                    musicServiceConnection.setPlaylist(tracks, startIndex = 0, playlistId = -1)
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.value = MusicListUiState.Loading
+
+            runCatching { scanMusicUseCase() }
+                .onSuccess { tracks ->
+                    if (tracks.isNotEmpty()) {
+                        playerUseCase.setPlaylist(tracks, startIndex = 0, playlistId = -1)
+                        _uiState.value = MusicListUiState.Success(tracks)
+                    } else {
+                        _uiState.value = MusicListUiState.Error("No se encontraron canciones")
+                    }
                 }
-                _uiState.value = MusicListUiState(isLoading = false, tracks = tracks)
-            } catch (e: Exception) {
-                _uiState.value = MusicListUiState(
-                    isLoading = false,
-                    error = e.message ?: "Error desconocido"
-                )
-            }
+                .onFailure { e ->
+                    _uiState.value = MusicListUiState.Error(e.message ?: "Error desconocido")
+                }
         }
     }
 
     override fun onCleared() {
+        playerUseCase.disconnect()
         super.onCleared()
-        musicServiceConnection.disconnect()
     }
 }

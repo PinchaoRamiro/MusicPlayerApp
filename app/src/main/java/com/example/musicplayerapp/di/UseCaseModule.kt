@@ -36,5 +36,4 @@ object UseCaseModule {
             getFavorites = GetFavoritesUseCase(repository)
         )
     }
-
 }

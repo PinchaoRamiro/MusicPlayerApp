@@ -1,10 +1,12 @@
 package com.example.musicplayerapp
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import com.example.musicplayerapp.core.utils.PermissionsManager
 import com.example.musicplayerapp.ui.nav.MusicNavigationScreen
 import com.example.musicplayerapp.viewmodel.FavoritesViewModel
@@ -25,9 +27,12 @@ class MainActivity : ComponentActivity() {
         val granted = permissions.values.all { it }
         if (granted) {
             musicListViewModel.loadMusic()
+        }else{
+            finish()
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestPermissions()

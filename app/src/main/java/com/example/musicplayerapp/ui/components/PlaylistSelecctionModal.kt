@@ -13,14 +13,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.musicplayerapp.data.database.entities.PlaylistWithCount
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistSelectionModal(
-    playlists: List<Pair<Long, String>>, // Lista de (id, nombre)
+    playlists: List<PlaylistWithCount>, // Lista de (id, nombre)
     onDismiss: () -> Unit,
     onPlaylistSelected: (Long) -> Unit
 ) {
+    if (playlists.isEmpty()) return
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth()

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.musicplayerapp.data.database.entities.PlaylistWithCount
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.data.model.Playlist
+import com.example.musicplayerapp.domain.usecase.PlayerUseCase
 import com.example.musicplayerapp.domain.usecase.PlaylistUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,14 +26,20 @@ data class PlaylistUiState(
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     application: Application,
-    private val playlistUseCases: PlaylistUseCases
+    private val playlistUseCases: PlaylistUseCases,
+    private val playerUseCase: PlayerUseCase
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(PlaylistUiState())
     val uiState: StateFlow<PlaylistUiState> = _uiState.asStateFlow()
 
     init {
+        Log.d("PlaylistViewModel", "init")
         observePlaylists()
+    }
+
+    fun queueNext(trackId: String) {
+        playerUseCase.queueNext(trackId)
     }
 
     private fun observePlaylists() {
@@ -121,6 +128,4 @@ class PlaylistViewModel @Inject constructor(
         }
         return tracksFlow.asStateFlow()
     }
-
-
 }

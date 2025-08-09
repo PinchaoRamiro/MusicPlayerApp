@@ -56,10 +56,8 @@ room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
-# Paging (to pagination)
-paging-runtime = { module = "androidx.paging:paging-runtime", version = "3.3.6" }
-paging-compose = { module = "androidx.paging:paging-compose", version = "3.3.6" }
-
+# To drag and Drop
+reorderable = { module = "sh.calvin.reorderable:reorderable", version = "2.5.1" }
 
 # Hilt
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }

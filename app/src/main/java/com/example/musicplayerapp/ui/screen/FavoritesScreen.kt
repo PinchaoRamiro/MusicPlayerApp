@@ -9,14 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.musicplayerapp.ui.components.MusicListItem
 import com.example.musicplayerapp.viewmodel.FavoritesViewModel
-import com.example.musicplayerapp.viewmodel.MusicServiceConnection
+import com.example.musicplayerapp.player.service.MusicServiceConnection
 
 @Composable
 fun FavoritesScreen(
-    favoritesViewModel: FavoritesViewModel,
-    musicServiceConnection: MusicServiceConnection,
+    favoritesViewModel: FavoritesViewModel
 ) {
     val favoriteTracks = favoritesViewModel.uiState.collectAsState().value.favorites
 
@@ -36,8 +36,8 @@ fun FavoritesScreen(
                 MusicListItem(
                     track = track,
                     onClick = {
-                        musicServiceConnection.setPlaylist(favoriteTracks, 0, -2)
-                        musicServiceConnection.play(track)
+                        favoritesViewModel.setPlaylist(favoriteTracks, favoriteTracks.indexOf(track), 0)
+                        favoritesViewModel.playTrack(track)
                     },
                     showMenu = true,
                     onMenuClick = {
