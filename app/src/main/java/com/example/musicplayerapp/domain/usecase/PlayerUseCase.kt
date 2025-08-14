@@ -1,6 +1,5 @@
 package com.example.musicplayerapp.domain.usecase
 
-import android.util.Log
 import com.example.musicplayerapp.data.model.MusicTrack
 import com.example.musicplayerapp.player.service.MusicServiceConnection
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +48,14 @@ class PlayerUseCase @Inject constructor(
         if (tracks.isNotEmpty()) {
             musicServiceConnection.setPlaylist(tracks, startIndex, playlistId)
         }
+    }
+
+    fun getQueue(): List<MusicTrack> {
+        return musicServiceConnection.getQueue()
+    }
+
+    fun moveTrack(fromIndex: Int, toIndex: Int) {
+        musicServiceConnection.moveTrack(fromIndex, toIndex)
     }
 
     fun connect() = musicServiceConnection.connect()

@@ -15,7 +15,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -72,19 +71,32 @@ class MusicServiceConnection @Inject constructor(
     }
 
     fun toggleShuffle() {
-        _isShuffleEnabled.update { !it }
-        val current = _currentTrack.value?.toMediaItem() ?: return
-        currentList = if (_isShuffleEnabled.value) createShuffledList(current) else originalList.toMutableList()
-        updateControllerQueue()
+        if(!isConnected()) return
+        _isShuffleEnabled.value = !_isShuffleEnabled.value
+        val current = controller?.currentMediaItem
+        val pos = controller?.currentPosition
+
+        if (_isShuffleEnabled.value) {
+            currentList.shuffle()
+        } else {
+            currentList = originalList.toMutableList()
+        }
+
+        controller?.setMediaItems(currentList)
+        val newIndex = currentList.indexOfFirst { it.mediaId == current?.mediaId }
+            .coerceAtLeast(0)
+        controller?.seekTo(newIndex, pos!!)
+        controller?.prepare()
+        controller?.play()
     }
 
     fun getQueue(): List<MusicTrack> = currentList.map { it.toMusicTrack() }
 
     fun moveTrack(fromIndex: Int, toIndex: Int) {
+        if (fromIndex == toIndex) return
         currentList.add(toIndex, currentList.removeAt(fromIndex))
-        updateControllerQueue()
+        controller?.moveMediaItem(fromIndex, toIndex )
     }
-
     /** ================================
      *  Connection
      *  ================================ */
@@ -149,19 +161,6 @@ class MusicServiceConnection @Inject constructor(
     /** ================================
      *  Helpers
      *  ================================ */
-    private fun updateControllerQueue() {
-        val currentItem = controller?.currentMediaItem
-        controller?.setMediaItems(currentList)
-        val newIndex = currentList.indexOfFirst { it.mediaId == currentItem?.mediaId }.coerceAtLeast(0)
-        controller?.seekTo(newIndex, _currentPosition.value)
-        controller?.prepare()
-    }
-
-    private fun createShuffledList(current: MediaItem) =
-        originalList.filter { it.mediaId != current.mediaId }
-            .shuffled()
-            .toMutableList()
-            .apply { add(0, current) }
 
     private fun getCurrentMetadata(): MusicTrack? =
         controller?.currentMediaItem?.toMusicTrack()
